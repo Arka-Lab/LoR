@@ -1,6 +1,6 @@
 package pkg
 
-type CooperationRing struct {
+type CooperationTable struct {
 	ID          string
 	MemberCount uint
 	Weight      float64
