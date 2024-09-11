@@ -1,5 +1,9 @@
 package pkg
 
+const (
+	RoundsCount = 10
+)
+
 type CooperationTable struct {
 	ID          string  `json:"id"`
 	MemberCount uint    `json:"member_count"`
