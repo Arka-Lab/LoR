@@ -10,12 +10,12 @@ const (
 )
 
 type CoinTable struct {
-	ID       string
-	Amount   float64
-	Status   Status
-	Type     uint
-	Next     string
-	Prev     string
-	BindedOn string
-	Owner    string
+	ID       string  `json:"id"`
+	Amount   float64 `json:"amount"`
+	Status   Status  `json:"status"`
+	Type     uint    `json:"type"`
+	Next     string  `json:"next"`
+	Prev     string  `json:"prev"`
+	BindedOn string  `json:"binded_on"`
+	Owner    string  `json:"owner"`
 }

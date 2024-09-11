@@ -6,10 +6,16 @@ import (
 	"github.com/Arka-Lab/LoR/tools"
 )
 
+type Data struct {
+	Traders map[string]*Trader
+	Coins   map[string]*CoinTable
+}
+
 type Trader struct {
-	ID      string
-	Account float64
-	Wallet  string
+	ID      string  `json:"id"`
+	Account float64 `json:"account"`
+	Wallet  string  `json:"wallet"`
+	Data    *Data   `json:"-"`
 }
 
 func (trader *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {

@@ -1,11 +1,11 @@
 package pkg
 
 type CooperationTable struct {
-	ID          string
-	MemberCount uint
-	Weight      float64
-	Next        string
-	Prev        string
-	Investor    string
-	Rounds      uint
+	ID          string  `json:"id"`
+	MemberCount uint    `json:"member_count"`
+	Weight      float64 `json:"weight"`
+	Next        string  `json:"next"`
+	Prev        string  `json:"prev"`
+	Investor    string  `json:"investor"`
+	Rounds      uint    `json:"rounds"`
 }
