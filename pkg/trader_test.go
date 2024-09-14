@@ -112,20 +112,29 @@ func TestCooperationRing(t *testing.T) {
 }
 
 func TestFractalRing(t *testing.T) {
-	var team []string
-	traders := createTrader(500, 2)
-	for i := 0; team == nil && i < pkg.FractalMax; i++ {
-		coin1 := traders[rand.Intn(3)].CreateCoin(100, 0)
-		coin2 := traders[rand.Intn(3)].CreateCoin(100, 1)
-		coin3 := traders[rand.Intn(3)].CreateCoin(100, 2)
-		for _, trader := range traders {
-			saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2}, false, false, false)
-			fmt.Println(i)
-			_, team = saveCoinAndCheck(t, trader, coin3, false, true, true)
+	testcase := []struct {
+		traderCount int
+		hasTeam     bool
+	}{{pkg.VerificationMax << 1, true}, {pkg.VerificationMin - 1, false}}
+
+	for _, tc := range testcase {
+		var team []string
+		traders := createTrader(tc.traderCount, 2)
+		for i := 0; team == nil && i < pkg.FractalMax; i++ {
+			coin1 := traders[rand.Intn(len(traders))].CreateCoin(100, 0)
+			coin2 := traders[rand.Intn(len(traders))].CreateCoin(100, 1)
+			coin3 := traders[rand.Intn(len(traders))].CreateCoin(100, 2)
+			for _, trader := range traders {
+				saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2}, false, false, false)
+				_, team = saveCoinAndCheck(t, trader, coin3, false, tc.hasTeam, true)
+			}
 		}
-	}
-	if team == nil {
-		t.Fatal("SaveCoin failed: Fractal ring not found")
+
+		if team == nil && tc.hasTeam {
+			t.Fatal("SaveCoin failed: Fractal ring not found")
+		} else if team != nil && !tc.hasTeam {
+			t.Fatal("SaveCoin failed: Fail to detect fractal ring")
+		}
 	}
 }
 
