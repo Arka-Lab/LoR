@@ -10,7 +10,7 @@ import (
 func TestCreateTrader(t *testing.T) {
 	trader := pkg.CreateTrader(100, "test_wallet", 10)
 
-	if trader.ID != tools.SHA256str("test_wallet-10") {
+	if trader.ID != tools.SHA256Str("test_wallet-10") {
 		t.Error("CreateTrader failed: ID")
 	} else if trader.Account != 100 {
 		t.Error("CreateTrader failed: Account")
@@ -28,7 +28,7 @@ func TestCreateTrader(t *testing.T) {
 func TestCreateCoin(t *testing.T) {
 	trader := pkg.CreateTrader(100, "test_wallet", 10)
 
-	if coin := trader.CreateCoin(100, 1); coin.ID != tools.SHA256str(trader.ID+"-1-1") {
+	if coin := trader.CreateCoin(100, 1); coin.ID != tools.SHA256Str(trader.ID+"-1-1") {
 		t.Error("CreateCoin failed: ID")
 	} else if coin.Amount != 100 {
 		t.Error("CreateCoin failed: Amount")
@@ -42,7 +42,7 @@ func TestCreateCoin(t *testing.T) {
 		t.Error("CreateCoin failed: Owner")
 	}
 
-	if coin := trader.CreateCoin(96.5, 1); coin.ID != tools.SHA256str(trader.ID+"-1-2") {
+	if coin := trader.CreateCoin(96.5, 1); coin.ID != tools.SHA256Str(trader.ID+"-1-2") {
 		t.Error("CreateCoin failed: ID")
 	}
 }
@@ -59,7 +59,65 @@ func TestSaveTrader(t *testing.T) {
 	}
 }
 
+func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasFractal, hasRing bool) (*pkg.CooperationTable, []string) {
+	ring, fractal, err := trader.SaveCoin(*coin)
+	if err != nil && !hasError {
+		t.Fatal("SaveCoin failed:", err)
+	} else if err == nil && hasError {
+		t.Fatal("SaveCoin failed: Error not detected")
+	} else if ring != nil && !hasRing {
+		t.Fatal("SaveCoin failed: Cooperation ring detected")
+	} else if ring == nil && hasRing {
+		t.Fatal("SaveCoin failed: Fail to detect cooperation ring")
+	} else if fractal != nil && !hasFractal {
+		t.Fatal("SaveCoin failed: Fractal ring detected")
+	} else if fractal == nil && hasFractal {
+		t.Fatal("SaveCoin failed: Fail to detect fractal ring")
+	}
+	return ring, fractal
+}
+
+func saveBatch(t *testing.T, trader *pkg.Trader, coins []*pkg.CoinTable, hasError, hasFractal, hasRing bool) (rings []*pkg.CooperationTable, fractals [][]string) {
+	for _, coin := range coins {
+		ring, fractal := saveCoinAndCheck(t, trader, coin, hasError, hasFractal, hasRing)
+		rings, fractals = append(rings, ring), append(fractals, fractal)
+	}
+	return
+}
+
 func TestSaveCoin(t *testing.T) {
+	trader := pkg.CreateTrader(10.5, "test_wallet", 2)
+	coin1 := trader.CreateCoin(10.5, 3)
+	coin2 := trader.CreateCoin(13.8, 2)
+
+	saveCoinAndCheck(t, trader, coin1, true, false, false)
+	saveCoinAndCheck(t, trader, coin2, false, false, false)
+	saveCoinAndCheck(t, trader, coin2, true, false, false)
+}
+
+func findIndex(arr []string, val string) int {
+	for i, v := range arr {
+		if v == val {
+			return i
+		}
+	}
+	return -1
+}
+
+func saveCoins(c1s, c2s, c3s []*pkg.CoinTable) (ringIDs []string, ringWeights []float64, ringInvestors []string) {
+	for _, c1 := range c1s {
+		for _, c2 := range c2s {
+			for _, c3 := range c3s {
+				ringIDs = append(ringIDs, tools.SHA256Str(c1.ID+"-"+c2.ID+"-"+c3.ID))
+				ringWeights = append(ringWeights, c1.Amount+c2.Amount+c3.Amount)
+				ringInvestors = append(ringInvestors, c1.ID)
+			}
+		}
+	}
+	return
+}
+
+func TestCooperationRing(t *testing.T) {
 	trader1 := pkg.CreateTrader(100, "test_wallet1", 2)
 	trader2 := pkg.CreateTrader(100, "test_wallet2", 2)
 
@@ -70,53 +128,17 @@ func TestSaveCoin(t *testing.T) {
 	coin5 := trader2.CreateCoin(3.4, 2)
 	coin6 := trader1.CreateCoin(7.3, 2)
 	coin7 := trader1.CreateCoin(11.7, 2)
-	ringIDs, ringWeights, ringInvestors := []string{}, []float64{}, []string{}
-	for _, c1 := range []*pkg.CoinTable{coin1, coin3} {
-		for _, c2 := range []*pkg.CoinTable{coin2, coin4} {
-			for _, c3 := range []*pkg.CoinTable{coin5, coin6} {
-				ringIDs = append(ringIDs, tools.SHA256str(c1.ID+"-"+c2.ID+"-"+c3.ID))
-				ringWeights = append(ringWeights, c1.Amount+c2.Amount+c3.Amount)
-				ringInvestors = append(ringInvestors, c1.ID)
-			}
-		}
-	}
 
-	saveAndCheck := func(trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasRing bool) (ring *pkg.CooperationTable) {
-		ring, err := trader.SaveCoin(*coin)
-		if err != nil && !hasError {
-			t.Fatal("SaveCoin failed:", err)
-		} else if err == nil && hasError {
-			t.Fatal("SaveCoin failed: Error not detected")
-		} else if ring != nil && !hasRing {
-			t.Fatal("SaveCoin failed: Cooperation ring detected")
-		} else if ring == nil && hasRing {
-			t.Fatal("SaveCoin failed: Fail to detect cooperation ring")
-		}
-
-		return ring
-	}
-	findIndex := func(ringID string) int {
-		for i, id := range ringIDs {
-			if id == ringID {
-				return i
-			}
-		}
-		return -1
-	}
-
+	ringIDs, ringWeights, ringInvestors := saveCoins([]*pkg.CoinTable{coin1, coin3}, []*pkg.CoinTable{coin2, coin4}, []*pkg.CoinTable{coin5, coin6})
 	for _, trader := range []*pkg.Trader{trader1, trader2} {
-		for _, coin := range []*pkg.CoinTable{coin1, coin2, coin3, coin4} {
-			saveAndCheck(trader, coin, false, false)
-		}
-
-		ring1 := saveAndCheck(trader, coin5, false, true)
-		ring2 := saveAndCheck(trader, coin6, false, true)
+		saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2, coin3, coin4}, false, false, false)
+		rings, _ := saveBatch(t, trader, []*pkg.CoinTable{coin5, coin6}, false, false, true)
+		ring1, ring2 := rings[0], rings[1]
 		if ring1.ID == ring2.ID {
 			t.Fatal("SaveCoin failed: Same cooperation ring ID")
 		}
 
-		index1 := findIndex(ring1.ID)
-		index2 := findIndex(ring2.ID)
+		index1, index2 := findIndex(ringIDs, ring1.ID), findIndex(ringIDs, ring2.ID)
 		if index1 == -1 || index2 == -1 {
 			t.Fatal("SaveCoin failed: Cooperation ring not found")
 		} else if ring1.MemberCount != 3 || ring2.MemberCount != 3 {
@@ -131,6 +153,6 @@ func TestSaveCoin(t *testing.T) {
 			t.Fatal("SaveCoin failed: Cooperation ring not match")
 		}
 
-		saveAndCheck(trader, coin7, false, false)
+		saveCoinAndCheck(t, trader, coin7, false, false, false)
 	}
 }
