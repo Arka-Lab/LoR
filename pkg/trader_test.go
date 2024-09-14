@@ -65,6 +65,7 @@ func TestSaveCoin(t *testing.T) {
 	trader := pkg.CreateTrader(10.5, "test_wallet", 2)
 	coin1 := trader.CreateCoin(10.5, 3)
 	coin2 := trader.CreateCoin(13.8, 2)
+	trader.SaveTrader(*trader)
 
 	saveCoinAndCheck(t, trader, coin1, true, false, false)
 	saveCoinAndCheck(t, trader, coin2, false, false, false)
