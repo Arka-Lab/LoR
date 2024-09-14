@@ -7,4 +7,5 @@ var (
 	ErrCoinAlreadyExist   = errors.New("coin already exist")
 	ErrInvalidCoinType    = errors.New("invalid coin type")
 	ErrRingAlreadyExist   = errors.New("ring already exist")
+	ErrTraderNotFound     = errors.New("trader not found")
 )
