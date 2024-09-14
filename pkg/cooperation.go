@@ -38,6 +38,7 @@ func (t *Trader) checkForCooperationRings() *CooperationTable {
 
 func (t *Trader) selectCooperationRing() (members []string, selectedRing []string, weight float64) {
 	for index, coins := range t.Data.RunCoins {
+		// TODO use a better random number generator
 		randomIndex := tools.SHA256Int(coins) % len(coins)
 		selectedRing = append(selectedRing, coins[randomIndex])
 
