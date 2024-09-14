@@ -1,25 +1,34 @@
 package pkg
 
-import "github.com/Arka-Lab/LoR/tools"
+import (
+	"github.com/Arka-Lab/LoR/tools"
+)
 
 const (
-	FractalMin      = 500
-	FractalMax      = 2000
+	FractalMin      = 50
+	FractalMax      = 200
 	VerificationMin = 20
 	VerificationMax = 50
 )
 
-func (t *Trader) checkForFractalRings() []string {
+func (t *Trader) checkForFractalRings() (team []string) {
 	if len(t.Data.SoloRings) < FractalMin {
 		return nil
 	}
 
+	// TODO use a better random number generator
 	k := FractalMin + tools.SHA256Int(t.Data.SoloRings)%(FractalMax-FractalMin+1)
 	if len(t.Data.SoloRings) < k {
 		return nil
 	}
 
+	// TODO use a better random number generator
 	selectedRings, rest := tools.RandomSet(t.Data.SoloRings, k)
+	team = t.selectVerificationTeam(selectedRings)
+	if team == nil {
+		return nil
+	}
+
 	for i := 0; i < len(selectedRings); i++ {
 		ring := t.Data.Rings[selectedRings[i]]
 
@@ -29,16 +38,21 @@ func (t *Trader) checkForFractalRings() []string {
 		t.Data.Rings[selectedRings[i]] = ring
 	}
 	t.Data.SoloRings = rest
-
-	return t.selectVerificationTeam(selectedRings)
+	return
 }
 
 func (t *Trader) selectVerificationTeam(rings []string) (team []string) {
 	k := VerificationMin + tools.SHA256Int(rings)%(VerificationMax-VerificationMin+1)
-	selectedRings, _ := tools.RandomSet(rings, k)
-	for _, ring := range selectedRings {
-		randomIndex := tools.SHA256Int(t.Data.Rings[ring].Members) % len(t.Data.Rings[ring].Members)
-		team = append(team, t.Data.Rings[ring].Members[randomIndex])
+	if len(t.Data.Traders) < k {
+		return nil
 	}
+
+	traders := make([]string, 0, len(t.Data.Traders))
+	for trader := range t.Data.Traders {
+		traders = append(traders, trader)
+	}
+
+	// TODO use a better random number generator
+	team, _ = tools.RandomSet(traders, k)
 	return
 }
