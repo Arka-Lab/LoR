@@ -30,8 +30,8 @@ func (t *Trader) selectVerificationTeam(rings []string) (team []string) {
 	k := VerificationMin + tools.SHA256Int(rings)%(VerificationMax-VerificationMin+1)
 	selectedRings, _ := tools.RandomSet(rings, k)
 	for _, ring := range selectedRings {
-		selectedMember, _ := tools.RandomSet(t.Data.Rings[ring].Members, 1)
-		team = append(team, selectedMember[0])
+		randomIndex := tools.SHA256Int(t.Data.Rings[ring].Members) % len(t.Data.Rings[ring].Members)
+		team = append(team, t.Data.Rings[ring].Members[randomIndex])
 	}
 	return
 }
