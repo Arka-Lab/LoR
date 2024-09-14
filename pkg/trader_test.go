@@ -1,6 +1,8 @@
 package pkg_test
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/Arka-Lab/LoR/pkg"
@@ -59,32 +61,6 @@ func TestSaveTrader(t *testing.T) {
 	}
 }
 
-func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasFractal, hasRing bool) (*pkg.CooperationTable, []string) {
-	ring, fractal, err := trader.SaveCoin(*coin)
-	if err != nil && !hasError {
-		t.Fatal("SaveCoin failed:", err)
-	} else if err == nil && hasError {
-		t.Fatal("SaveCoin failed: Error not detected")
-	} else if ring != nil && !hasRing {
-		t.Fatal("SaveCoin failed: Cooperation ring detected")
-	} else if ring == nil && hasRing {
-		t.Fatal("SaveCoin failed: Fail to detect cooperation ring")
-	} else if fractal != nil && !hasFractal {
-		t.Fatal("SaveCoin failed: Fractal ring detected")
-	} else if fractal == nil && hasFractal {
-		t.Fatal("SaveCoin failed: Fail to detect fractal ring")
-	}
-	return ring, fractal
-}
-
-func saveBatch(t *testing.T, trader *pkg.Trader, coins []*pkg.CoinTable, hasError, hasFractal, hasRing bool) (rings []*pkg.CooperationTable, fractals [][]string) {
-	for _, coin := range coins {
-		ring, fractal := saveCoinAndCheck(t, trader, coin, hasError, hasFractal, hasRing)
-		rings, fractals = append(rings, ring), append(fractals, fractal)
-	}
-	return
-}
-
 func TestSaveCoin(t *testing.T) {
 	trader := pkg.CreateTrader(10.5, "test_wallet", 2)
 	coin1 := trader.CreateCoin(10.5, 3)
@@ -95,44 +71,22 @@ func TestSaveCoin(t *testing.T) {
 	saveCoinAndCheck(t, trader, coin2, true, false, false)
 }
 
-func findIndex(arr []string, val string) int {
-	for i, v := range arr {
-		if v == val {
-			return i
-		}
-	}
-	return -1
-}
-
-func saveCoins(c1s, c2s, c3s []*pkg.CoinTable) (ringIDs []string, ringWeights []float64, ringInvestors []string) {
-	for _, c1 := range c1s {
-		for _, c2 := range c2s {
-			for _, c3 := range c3s {
-				ringIDs = append(ringIDs, tools.SHA256Str(c1.ID+"-"+c2.ID+"-"+c3.ID))
-				ringWeights = append(ringWeights, c1.Amount+c2.Amount+c3.Amount)
-				ringInvestors = append(ringInvestors, c1.ID)
-			}
-		}
-	}
-	return
-}
-
 func TestCooperationRing(t *testing.T) {
-	trader1 := pkg.CreateTrader(100, "test_wallet1", 2)
-	trader2 := pkg.CreateTrader(100, "test_wallet2", 2)
+	traders := createTrader(2, 2)
+	coins := []*pkg.CoinTable{
+		traders[0].CreateCoin(10.5, 0),
+		traders[1].CreateCoin(9.8, 1),
+		traders[1].CreateCoin(7.3, 0),
+		traders[1].CreateCoin(2.5, 1),
+		traders[1].CreateCoin(3.4, 2),
+		traders[0].CreateCoin(7.3, 2),
+		traders[0].CreateCoin(11.7, 2),
+	}
 
-	coin1 := trader1.CreateCoin(10.5, 0)
-	coin2 := trader2.CreateCoin(9.8, 1)
-	coin3 := trader2.CreateCoin(7.3, 0)
-	coin4 := trader2.CreateCoin(2.5, 1)
-	coin5 := trader2.CreateCoin(3.4, 2)
-	coin6 := trader1.CreateCoin(7.3, 2)
-	coin7 := trader1.CreateCoin(11.7, 2)
-
-	ringIDs, ringWeights, ringInvestors := saveCoins([]*pkg.CoinTable{coin1, coin3}, []*pkg.CoinTable{coin2, coin4}, []*pkg.CoinTable{coin5, coin6})
-	for _, trader := range []*pkg.Trader{trader1, trader2} {
-		saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2, coin3, coin4}, false, false, false)
-		rings, _ := saveBatch(t, trader, []*pkg.CoinTable{coin5, coin6}, false, false, true)
+	ringIDs, ringWeights, ringInvestors := saveCoins([]*pkg.CoinTable{coins[0], coins[2]}, []*pkg.CoinTable{coins[1], coins[3]}, []*pkg.CoinTable{coins[4], coins[5]})
+	for _, trader := range traders {
+		saveBatch(t, trader, coins[:4], false, false, false)
+		rings, _ := saveBatch(t, trader, coins[4:6], false, false, true)
 		ring1, ring2 := rings[0], rings[1]
 		if ring1.ID == ring2.ID {
 			t.Fatal("SaveCoin failed: Same cooperation ring ID")
@@ -153,6 +107,84 @@ func TestCooperationRing(t *testing.T) {
 			t.Fatal("SaveCoin failed: Cooperation ring not match")
 		}
 
-		saveCoinAndCheck(t, trader, coin7, false, false, false)
+		saveCoinAndCheck(t, trader, coins[6], false, false, false)
 	}
+}
+
+func TestFractalRing(t *testing.T) {
+	var team []string
+	traders := createTrader(500, 2)
+	for i := 0; team == nil && i < pkg.FractalMax; i++ {
+		coin1 := traders[rand.Intn(3)].CreateCoin(100, 0)
+		coin2 := traders[rand.Intn(3)].CreateCoin(100, 1)
+		coin3 := traders[rand.Intn(3)].CreateCoin(100, 2)
+		for _, trader := range traders {
+			saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2}, false, false, false)
+			fmt.Println(i)
+			_, team = saveCoinAndCheck(t, trader, coin3, false, true, true)
+		}
+	}
+	if team == nil {
+		t.Fatal("SaveCoin failed: Fractal ring not found")
+	}
+}
+
+func createTrader(count, types int) []*pkg.Trader {
+	traders := make([]*pkg.Trader, count)
+	for i := 0; i < count; i++ {
+		traders[i] = pkg.CreateTrader(float64(i+1)*10, fmt.Sprintf("test_wallet%d", i), types)
+	}
+
+	for _, trader1 := range traders {
+		for _, trader2 := range traders {
+			trader1.SaveTrader(*trader2)
+		}
+	}
+	return traders
+}
+
+func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasFractal, hasRing bool) (*pkg.CooperationTable, []string) {
+	ring, fractal, err := trader.SaveCoin(*coin)
+	if err != nil && !hasError {
+		t.Fatal("SaveCoin failed:", err)
+	} else if err == nil && hasError {
+		t.Fatal("SaveCoin failed: Error not detected")
+	} else if ring != nil && !hasRing {
+		t.Fatal("SaveCoin failed: Cooperation ring detected")
+	} else if ring == nil && hasRing {
+		t.Fatal("SaveCoin failed: Fail to detect cooperation ring")
+	} else if fractal != nil && !hasFractal {
+		t.Fatal("SaveCoin failed: Fractal ring detected")
+	}
+	return ring, fractal
+}
+
+func saveBatch(t *testing.T, trader *pkg.Trader, coins []*pkg.CoinTable, hasError, hasFractal, hasRing bool) (rings []*pkg.CooperationTable, fractals [][]string) {
+	for _, coin := range coins {
+		ring, fractal := saveCoinAndCheck(t, trader, coin, hasError, hasFractal, hasRing)
+		rings, fractals = append(rings, ring), append(fractals, fractal)
+	}
+	return
+}
+
+func findIndex(arr []string, val string) int {
+	for i, v := range arr {
+		if v == val {
+			return i
+		}
+	}
+	return -1
+}
+
+func saveCoins(c1s, c2s, c3s []*pkg.CoinTable) (ringIDs []string, ringWeights []float64, ringInvestors []string) {
+	for _, c1 := range c1s {
+		for _, c2 := range c2s {
+			for _, c3 := range c3s {
+				ringIDs = append(ringIDs, tools.SHA256Str([]string{c1.ID, c2.ID, c3.ID}))
+				ringWeights = append(ringWeights, c1.Amount+c2.Amount+c3.Amount)
+				ringInvestors = append(ringInvestors, c1.ID)
+			}
+		}
+	}
+	return
 }
