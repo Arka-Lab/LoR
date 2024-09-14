@@ -7,12 +7,12 @@ import (
 )
 
 type TraderData struct {
-	Traders     map[string]Trader
-	Coins       map[string]CoinTable
-	Rings       map[string]CooperationTable
-	RunCoins    [][]string
-	SoloRings   []string
-	CoinCounter uint
+	Traders   map[string]Trader
+	Coins     map[string]CoinTable
+	Rings     map[string]CooperationTable
+	RunCoins  [][]string
+	SoloRings []string
+	Counter   uint
 }
 
 type Trader struct {
@@ -28,21 +28,21 @@ func CreateTrader(account float64, wallet string, coinTypeCount int) *Trader {
 		Account: account,
 		Wallet:  wallet,
 		Data: &TraderData{
-			CoinCounter: 0,
-			Traders:     make(map[string]Trader),
-			Coins:       make(map[string]CoinTable),
-			Rings:       make(map[string]CooperationTable),
-			RunCoins:    make([][]string, coinTypeCount+1),
-			SoloRings:   make([]string, 0),
+			Traders:   make(map[string]Trader),
+			Coins:     make(map[string]CoinTable),
+			Rings:     make(map[string]CooperationTable),
+			RunCoins:  make([][]string, coinTypeCount+1),
+			SoloRings: make([]string, 0),
+			Counter:   0,
 		},
 	}
 }
 
 func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
-	t.Data.CoinCounter++
+	t.Data.Counter++
 
 	return &CoinTable{
-		ID:       tools.SHA256Str(t.ID + "-" + strconv.Itoa(int(coinType)) + "-" + strconv.Itoa(int(t.Data.CoinCounter))),
+		ID:       tools.SHA256Str(t.ID + "-" + strconv.Itoa(int(coinType)) + "-" + strconv.Itoa(int(t.Data.Counter))),
 		Amount:   amount,
 		Status:   Run,
 		Type:     coinType,
@@ -66,6 +66,12 @@ func (t *Trader) SaveCoin(coin CoinTable) (*CooperationTable, []string, error) {
 	}
 	if coin.Type >= uint(len(t.Data.RunCoins)) {
 		return nil, nil, ErrInvalidCoinType
+	}
+	if _, ok := t.Data.Traders[coin.BindedOn]; !ok {
+		return nil, nil, ErrTraderNotFound
+	}
+	if _, ok := t.Data.Traders[coin.Owner]; !ok {
+		return nil, nil, ErrTraderNotFound
 	}
 
 	t.Data.Coins[coin.ID] = coin
