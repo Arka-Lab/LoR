@@ -2,6 +2,13 @@ package pkg
 
 import "github.com/Arka-Lab/LoR/tools"
 
+const (
+	FractalMin      = 500
+	FractalMax      = 2000
+	VerificationMin = 20
+	VerificationMax = 50
+)
+
 func (t *Trader) checkForFractalRings() []string {
 	if len(t.Data.SoloRings) < FractalMin {
 		return nil

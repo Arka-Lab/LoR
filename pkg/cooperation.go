@@ -3,11 +3,7 @@ package pkg
 import "github.com/Arka-Lab/LoR/tools"
 
 const (
-	RoundsCount     = 10
-	FractalMin      = 500
-	FractalMax      = 2000
-	VerificationMin = 20
-	VerificationMax = 50
+	RoundsCount = 10
 )
 
 type CooperationTable struct {
