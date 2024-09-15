@@ -30,8 +30,8 @@ func TestCreateTrader(t *testing.T) {
 func TestCreateCoin(t *testing.T) {
 	trader := pkg.CreateTrader(100, "test_wallet", 10)
 
-	if coin := trader.CreateCoin(100, 1); coin.ID != tools.SHA256Str(trader.ID+"-1-1") {
-		t.Error("CreateCoin failed: ID")
+	if coin := trader.CreateCoin(100, 1); tools.VerifyWithPublicKeyStr(trader.ID+"-1", coin.ID, trader.PublicKey) != nil {
+		t.Error("CreateCoin failed: first ID")
 	} else if coin.Amount != 100 {
 		t.Error("CreateCoin failed: Amount")
 	} else if coin.Status != pkg.Run {
@@ -44,8 +44,8 @@ func TestCreateCoin(t *testing.T) {
 		t.Error("CreateCoin failed: Owner")
 	}
 
-	if coin := trader.CreateCoin(96.5, 1); coin.ID != tools.SHA256Str(trader.ID+"-1-2") {
-		t.Error("CreateCoin failed: ID")
+	if coin := trader.CreateCoin(96.5, 1); tools.VerifyWithPublicKeyStr(trader.ID+"-1", coin.ID, trader.PublicKey) != nil {
+		t.Error("CreateCoin failed: second ID")
 	}
 }
 
