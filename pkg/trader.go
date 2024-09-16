@@ -103,5 +103,5 @@ func (t *Trader) SaveCoin(coin CoinTable) (*CooperationTable, []string, error) {
 		t.Data.SoloRings = append(t.Data.SoloRings, ring.ID)
 		return ring, t.checkForFractalRings(), nil
 	}
-	return ring, nil, nil
+	return nil, nil, nil
 }
