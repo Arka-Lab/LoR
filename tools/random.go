@@ -2,28 +2,29 @@ package tools
 
 import (
 	"crypto"
-	"crypto/rand"
+	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"math/rand"
 )
 
-func RandomSet(data []string, k int) ([]string, []string) {
-	arr := make([]string, len(data))
+func RandomSelect(data []string, k int) []string {
 	rnd := make([]int, 0)
-	copy(arr, data)
+	index := rand.Intn(len(data))
+	data[0], data[index] = data[index], data[0]
 
-	for i := 0; i < k; i++ {
+	for i := 1; i < k; i++ {
 		if len(rnd) == 0 {
-			rnd = SHA256Arr(arr[i:])
+			rnd = SHA256Arr(data[:i])
 		}
-		index := rnd[0] % (len(arr) - i)
-		arr[i], arr[index], rnd = arr[index], arr[i], rnd[1:]
+		index, rnd = rnd[0]%(len(data)-i), rnd[1:]
+		data[i], data[index] = data[index], data[i]
 	}
-	return arr[:k], arr[k:]
+	return data[:k]
 }
 
 func GeneratePrivateKey(size int) (*rsa.PrivateKey, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, size)
+	privateKey, err := rsa.GenerateKey(crand.Reader, size)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func GeneratePrivateKey(size int) (*rsa.PrivateKey, error) {
 
 func SignWithPrivateKey(data []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
 	hashed := sha256.Sum256(data)
-	return rsa.SignPSS(rand.Reader, privateKey, crypto.SHA256, hashed[:], nil)
+	return rsa.SignPSS(crand.Reader, privateKey, crypto.SHA256, hashed[:], nil)
 }
 
 func VerifyWithPublicKey(data []byte, signature []byte, publicKey *rsa.PublicKey) error {
