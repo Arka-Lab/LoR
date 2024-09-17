@@ -1,6 +1,10 @@
 package pkg
 
-import "github.com/Arka-Lab/LoR/tools"
+import (
+	"math/rand"
+
+	"github.com/Arka-Lab/LoR/tools"
+)
 
 const (
 	RoundsCount = 10
@@ -37,13 +41,21 @@ func (t *Trader) checkForCooperationRings() *CooperationTable {
 }
 
 func (t *Trader) selectCooperationRing() (members []string, selectedRing []string, weight float64) {
-	for index, coins := range t.Data.RunCoins {
-		// TODO use a better random number generator
-		randomIndex := tools.SHA256Int(coins) % len(coins)
-		selectedRing = append(selectedRing, coins[randomIndex])
+	selectedRing = make([]string, len(t.Data.RunCoins))
+	startIndex := rand.Intn(len(selectedRing))
 
-		coins[randomIndex] = coins[len(coins)-1]
-		t.Data.RunCoins[index] = coins[:len(coins)-1]
+	randomIndex := rand.Intn(len(t.Data.RunCoins[startIndex]))
+	selectedRing[startIndex] = t.Data.RunCoins[startIndex][randomIndex]
+	t.removeRunCoin(startIndex, randomIndex)
+	for i := startIndex + 1; i < len(t.Data.RunCoins); i++ {
+		randomIndex = tools.SHA256Int(selectedRing) % len(t.Data.RunCoins[i])
+		selectedRing[i] = t.Data.RunCoins[i][randomIndex]
+		t.removeRunCoin(i, randomIndex)
+	}
+	for i := 0; i < startIndex; i++ {
+		randomIndex = tools.SHA256Int(selectedRing) % len(t.Data.RunCoins[i])
+		selectedRing[i] = t.Data.RunCoins[i][randomIndex]
+		t.removeRunCoin(i, randomIndex)
 	}
 
 	for i := 0; i < len(selectedRing); i++ {
@@ -58,6 +70,12 @@ func (t *Trader) selectCooperationRing() (members []string, selectedRing []strin
 
 		t.Data.Coins[selectedRing[i]] = coin
 	}
-
 	return
+}
+
+func (t *Trader) removeRunCoin(coinType int, index int) {
+	if index < len(t.Data.RunCoins[coinType]) {
+		t.Data.RunCoins[coinType][index] = t.Data.RunCoins[coinType][0]
+		t.Data.RunCoins[coinType] = t.Data.RunCoins[coinType][1:]
+	}
 }
