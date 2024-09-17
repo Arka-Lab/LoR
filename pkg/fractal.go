@@ -16,18 +16,17 @@ func (t *Trader) checkForFractalRings() (team []string) {
 		return nil
 	}
 
-	// TODO use a better random number generator
 	k := FractalMin + tools.SHA256Int(t.Data.SoloRings)%(FractalMax-FractalMin+1)
 	if len(t.Data.SoloRings) < k {
 		return nil
 	}
 
-	// TODO use a better random number generator
-	selectedRings, rest := tools.RandomSet(t.Data.SoloRings, k)
+	selectedRings := tools.RandomSelect(t.Data.SoloRings, k)
 	team = t.selectVerificationTeam(selectedRings)
 	if team == nil {
 		return nil
 	}
+	t.Data.SoloRings = t.Data.SoloRings[k:]
 
 	for i := 0; i < len(selectedRings); i++ {
 		ring := t.Data.Rings[selectedRings[i]]
@@ -37,11 +36,10 @@ func (t *Trader) checkForFractalRings() (team []string) {
 
 		t.Data.Rings[selectedRings[i]] = ring
 	}
-	t.Data.SoloRings = rest
 	return
 }
 
-func (t *Trader) selectVerificationTeam(rings []string) (team []string) {
+func (t *Trader) selectVerificationTeam(rings []string) []string {
 	k := VerificationMin + tools.SHA256Int(rings)%(VerificationMax-VerificationMin+1)
 	if len(t.Data.Traders) < k {
 		return nil
@@ -51,8 +49,5 @@ func (t *Trader) selectVerificationTeam(rings []string) (team []string) {
 	for trader := range t.Data.Traders {
 		traders = append(traders, trader)
 	}
-
-	// TODO use a better random number generator
-	team, _ = tools.RandomSet(traders, k)
-	return
+	return tools.RandomSelect(traders, k)
 }
