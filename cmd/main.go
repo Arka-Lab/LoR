@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	numTraders, numTypes, numCoins := 1000, 5, 200000
+	numTraders, numTypes, numCoins := 100, 5, 200000
 	if err := internal.RandomBehavior(numTraders, numTypes, numCoins); err != nil {
 		log.Fatal(err)
 	}
