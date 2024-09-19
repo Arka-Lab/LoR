@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/Arka-Lab/LoR/pkg"
 )
@@ -14,36 +15,40 @@ const (
 	Debug = false
 )
 
+func print(message string) {
+	fmt.Println(time.Now().Format("2006-01-02 15:04:05"), message)
+}
+
 func RandomBehavior(numTraders, numTypes, numCoins int) error {
 	if !Debug {
 		log.SetOutput(io.Discard)
 	}
-	fmt.Println("Starting random behavior simulation...")
+	print("Starting random behavior simulation...")
 
 	traders, err := createTraders(numTraders, numTypes)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Traders created successfully.")
+	print("Traders created successfully.")
 
 	coins, err := createCoins(numCoins, numTypes, traders)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Coins created successfully.")
+	print("Coins created successfully.")
 
 	rings, fractals, err := processCoins(numCoins, numTraders, traders, coins)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Coins processed successfully.")
+	print("Coins processed successfully.")
 
 	fmt.Println("Trader statistics:")
 	for i := 0; i < numTraders; i++ {
 		fmt.Printf("\tTrader %d has %d cooperation rings and %d fractal teams.\n", i+1, len(rings[i]), len(fractals[i]))
 	}
 
-	fmt.Println("Random behavior simulation completed.")
+	print("Random behavior simulation completed.")
 	return nil
 }
 
