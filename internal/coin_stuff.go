@@ -92,12 +92,12 @@ func analyzeCoins(numTypes int, traders []*pkg.Trader, rings [][]*pkg.Cooperatio
 	for _, count := range mp {
 		counter[count]++
 	}
-	for i := len(traders) - 1; i >= 0; i-- {
+	for i := len(traders) - 1; i > 0; i-- {
 		counter[i] += counter[i+1]
 	}
 
 	fmt.Println("Coin statistics:")
-	for i := 0; i <= len(traders); i++ {
+	for i := 1; i <= len(traders); i++ {
 		fmt.Printf("\tCoins with at least %d traders: %d\n", i, counter[i])
 	}
 }
