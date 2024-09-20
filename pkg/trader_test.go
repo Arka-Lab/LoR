@@ -92,6 +92,8 @@ func TestCooperationRing(t *testing.T) {
 		if ring1.ID == ring2.ID {
 			t.Fatal("SaveCoin failed: Same cooperation ring ID")
 		}
+		testRing(t, trader, ring1)
+		testRing(t, trader, ring2)
 
 		index1, index2 := findIndex(ringIDs, ring1.ID), findIndex(ringIDs, ring2.ID)
 		if index1 == -1 || index2 == -1 {
@@ -197,4 +199,29 @@ func saveCoins(c1s, c2s, c3s []*pkg.CoinTable) (ringIDs []string, ringWeights []
 		}
 	}
 	return
+}
+
+func testRing(t *testing.T, trader *pkg.Trader, ring *pkg.CooperationTable) {
+	coins := trader.Data.Coins
+	for i, current := 0, ring.Members[0]; i < len(ring.Members); i++ {
+		coin := coins[current]
+		if coin.Status != pkg.Blocked {
+			t.Fatal("SaveCoin failed: Coin status")
+		} else if coin.Prev != ring.Members[(i-1+len(ring.Members))%len(ring.Members)] {
+			t.Fatal("SaveCoin failed: Prev")
+		} else if coin.Next != ring.Members[(i+1)%len(ring.Members)] {
+			t.Fatal("SaveCoin failed: Next")
+		}
+		current = coin.Next
+	}
+
+	if ring.ID != tools.SHA256Str(ring.Members) {
+		t.Fatal("SaveCoin failed: Cooperation ring ID")
+	} else if ring.Investor != ring.Members[0] {
+		t.Fatal("SaveCoin failed: Investor")
+	} else if ring.Weight != coins[ring.Members[0]].Amount+coins[ring.Members[1]].Amount+coins[ring.Members[2]].Amount {
+		t.Fatal("SaveCoin failed: Weight")
+	} else if ring.Rounds != pkg.RoundsCount {
+		t.Fatal("SaveCoin failed: Rounds")
+	}
 }
