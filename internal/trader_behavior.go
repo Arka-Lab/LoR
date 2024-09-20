@@ -33,14 +33,14 @@ func RandomBehavior(numTraders, numTypes, numCoins int) error {
 	}
 	print("Coins created successfully.")
 
-	rings, fractals, err := processCoins(numCoins, numTraders, traders, coins)
+	rings, fractals, err := processCoins(numCoins, traders, coins)
 	if err != nil {
 		return err
 	}
 	print("Coins processed successfully.")
 
 	analyzeTraders(numTraders, rings, fractals)
-	analyzeCoins(numTypes, numCoins, traders, coins, rings)
+	analyzeCoins(numTypes, traders, rings)
 
 	print("Random behavior simulation completed.")
 	return nil

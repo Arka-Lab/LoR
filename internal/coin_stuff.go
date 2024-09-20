@@ -6,95 +6,98 @@ import (
 	"math/rand"
 
 	"github.com/Arka-Lab/LoR/pkg"
-	"github.com/Arka-Lab/LoR/tools"
 )
 
 func createCoins(numCoins, numTypes int, traders []*pkg.Trader) ([]*pkg.CoinTable, error) {
-	ch := make(chan *pkg.CoinTable)
-	index := make([]int, numCoins)
+	ch := make(chan bool)
+	coins := make([]*pkg.CoinTable, numCoins)
 	for i := 0; i < numCoins; i++ {
 		go func(i int) {
-			randomIndex, coinType := rand.Intn(len(traders)), uint(rand.Intn(numTypes+1))
-			trader := traders[randomIndex]
+			trader := traders[rand.Intn(len(traders))]
+			coinType := uint(rand.Intn(numTypes + 1))
 
-			coin := trader.CreateCoin(rand.Float64()*1000, coinType)
-			index[i] = randomIndex
-			ch <- coin
+			coins[i] = trader.CreateCoin(rand.Float64()*1000, coinType)
+			ch <- coins[i] != nil
 		}(i)
 	}
 
-	coins := make([]*pkg.CoinTable, 0, numCoins)
 	for i := 0; i < numCoins; i++ {
-		coin := <-ch
-		if coin == nil {
-			return nil, fmt.Errorf("failed to create coin %d for trader %d", i+1, index[i]+1)
+		if ok := <-ch; !ok {
+			return nil, fmt.Errorf("failed to create coin")
 		}
-		coins = append(coins, coin)
 	}
 	return coins, nil
 }
 
-func processCoins(numCoins, numTraders int, traders []*pkg.Trader, coins []*pkg.CoinTable) ([][]*pkg.CooperationTable, [][][]string, error) {
-	rings := make([][]*pkg.CooperationTable, numTraders)
-	fractals := make([][][]string, numTraders)
+func processCoins(numCoins int, traders []*pkg.Trader, coins []*pkg.CoinTable) ([][]*pkg.CooperationTable, [][][]string, error) {
+	rings := make([][]*pkg.CooperationTable, len(traders))
+	fractals := make([][][]string, len(traders))
 	for i := 0; i < numCoins; i++ {
 		log.Printf("Processing coin %d...", i+1)
-		if err := processCoinForAllTraders(i, numTraders, traders, coins[i], rings, fractals); err != nil {
+		if ring, fractal, err := processCoinForTraders(traders, coins[i]); err != nil {
 			return nil, nil, err
+		} else {
+			for j := 0; j < len(traders); j++ {
+				if ring[j] != nil {
+					rings[j] = append(rings[j], ring[j])
+				}
+				if fractal[j] != nil {
+					fractals[j] = append(fractals[j], fractal[j])
+				}
+			}
 		}
 		log.Printf("Coin %d processed successfully.", i+1)
 	}
 	return rings, fractals, nil
 }
 
-func processCoinForAllTraders(coinIndex, numTraders int, traders []*pkg.Trader, coin *pkg.CoinTable, rings [][]*pkg.CooperationTable, fractals [][][]string) error {
+func processCoinForTraders(traders []*pkg.Trader, coin *pkg.CoinTable) ([]*pkg.CooperationTable, [][]string, error) {
 	ch := make(chan error)
-	for i := 0; i < numTraders; i++ {
+	fractals := make([][]string, len(traders))
+	rings := make([]*pkg.CooperationTable, len(traders))
+	for i := 0; i < len(traders); i++ {
 		go func(trader *pkg.Trader, coin *pkg.CoinTable, traderIndex int) {
 			ring, team, err := trader.SaveCoin(*coin)
 			if err != nil {
-				ch <- fmt.Errorf("failed to save coin %d to trader %d: %v", coinIndex+1, traderIndex+1, err)
+				ch <- fmt.Errorf("failed to save coin to trader %d: %v", traderIndex+1, err)
 				return
 			}
 
-			if ring != nil {
-				rings[traderIndex] = append(rings[traderIndex], ring)
-				if team != nil {
-					fractals[traderIndex] = append(fractals[traderIndex], team)
-				}
-			}
+			rings[traderIndex], fractals[traderIndex] = ring, team
 			ch <- nil
 		}(traders[i], coin, i)
 	}
 
-	for i := 0; i < numTraders; i++ {
+	for i := 0; i < len(traders); i++ {
 		if err := <-ch; err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
-	return nil
+	return rings, fractals, nil
 }
 
-func analyzeCoins(numTypes, numCoins int, traders []*pkg.Trader, coins []*pkg.CoinTable, rings [][]*pkg.CooperationTable) {
+func analyzeCoins(numTypes int, traders []*pkg.Trader, rings [][]*pkg.CooperationTable) {
 	mp := make(map[string]int)
 	for index, traderRings := range rings {
-		trader := traders[index]
+		coins := traders[index].Data.Coins
 		for _, ring := range traderRings {
-			current := trader.Data.Coins[ring.Investor]
-			for i := 0; i <= numTypes; i++ {
-				mp[current.ID]++
-				current = trader.Data.Coins[ring.Next]
+			for i, current := 0, ring.Investor; i <= numTypes; i++ {
+				mp[current]++
+				current = coins[current].Next
 			}
 		}
 	}
 
-	coinIDs := make([]string, 0, numCoins)
-	for _, coin := range coins {
-		coinIDs = append(coinIDs, coin.ID)
+	counter := make([]int, len(traders)+1)
+	for _, count := range mp {
+		counter[count]++
+	}
+	for i := len(traders) - 1; i >= 0; i-- {
+		counter[i] += counter[i+1]
 	}
 
 	fmt.Println("Coin statistics:")
-	for index, coinID := range tools.RandomSelect(coinIDs, 10) {
-		fmt.Printf("\tCoin %d has %d copies.\n", index+1, mp[coinID])
+	for i := 0; i <= len(traders); i++ {
+		fmt.Printf("\tCoins with at least %d traders: %d\n", i, counter[i])
 	}
 }
