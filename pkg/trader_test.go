@@ -65,7 +65,7 @@ func TestSaveCoin(t *testing.T) {
 	trader := pkg.CreateTrader(10.5, "test_wallet", 2)
 	coin1 := trader.CreateCoin(10.5, 3)
 	coin2 := trader.CreateCoin(13.8, 2)
-	trader.SaveTrader(*trader)
+	_ = trader.SaveTrader(*trader)
 
 	saveCoinAndCheck(t, trader, coin1, true, false, false)
 	saveCoinAndCheck(t, trader, coin2, false, false, false)
@@ -117,25 +117,25 @@ func TestCooperationRing(t *testing.T) {
 func TestFractalRing(t *testing.T) {
 	testcase := []struct {
 		traderCount int
-		hasTeam     bool
+		hasFractal  bool
 	}{{pkg.VerificationMax << 1, true}, {pkg.VerificationMin - 1, false}}
 
 	for _, tc := range testcase {
-		var team []string
+		var fractal *pkg.FractalRing
 		traders := createTrader(tc.traderCount, 2)
-		for i := 0; team == nil && i < pkg.FractalMax; i++ {
+		for i := 0; fractal == nil && i < pkg.FractalMax; i++ {
 			coin1 := traders[rand.Intn(len(traders))].CreateCoin(100, 0)
 			coin2 := traders[rand.Intn(len(traders))].CreateCoin(100, 1)
 			coin3 := traders[rand.Intn(len(traders))].CreateCoin(100, 2)
 			for _, trader := range traders {
 				saveBatch(t, trader, []*pkg.CoinTable{coin1, coin2}, false, false, false)
-				_, team = saveCoinAndCheck(t, trader, coin3, false, tc.hasTeam, true)
+				_, fractal = saveCoinAndCheck(t, trader, coin3, false, tc.hasFractal, true)
 			}
 		}
 
-		if team == nil && tc.hasTeam {
+		if fractal == nil && tc.hasFractal {
 			t.Fatal("SaveCoin failed: Fractal ring not found")
-		} else if team != nil && !tc.hasTeam {
+		} else if fractal != nil && !tc.hasFractal {
 			t.Fatal("SaveCoin failed: Fail to detect fractal ring")
 		}
 	}
@@ -149,13 +149,13 @@ func createTrader(count, types int) []*pkg.Trader {
 
 	for _, trader1 := range traders {
 		for _, trader2 := range traders {
-			trader1.SaveTrader(*trader2)
+			_ = trader1.SaveTrader(*trader2)
 		}
 	}
 	return traders
 }
 
-func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasFractal, hasRing bool) (*pkg.CooperationTable, []string) {
+func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, hasError, hasFractal, hasRing bool) (*pkg.CooperationTable, *pkg.FractalRing) {
 	ring, fractal, err := trader.SaveCoin(*coin)
 	if err != nil && !hasError {
 		t.Fatal("SaveCoin failed:", err)
@@ -171,7 +171,7 @@ func saveCoinAndCheck(t *testing.T, trader *pkg.Trader, coin *pkg.CoinTable, has
 	return ring, fractal
 }
 
-func saveBatch(t *testing.T, trader *pkg.Trader, coins []*pkg.CoinTable, hasError, hasFractal, hasRing bool) (rings []*pkg.CooperationTable, fractals [][]string) {
+func saveBatch(t *testing.T, trader *pkg.Trader, coins []*pkg.CoinTable, hasError, hasFractal, hasRing bool) (rings []*pkg.CooperationTable, fractals []*pkg.FractalRing) {
 	for _, coin := range coins {
 		ring, fractal := saveCoinAndCheck(t, trader, coin, hasError, hasFractal, hasRing)
 		rings, fractals = append(rings, ring), append(fractals, fractal)

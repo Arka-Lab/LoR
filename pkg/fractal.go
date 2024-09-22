@@ -11,7 +11,13 @@ const (
 	VerificationMax = 50
 )
 
-func (t *Trader) checkForFractalRings() (team []string) {
+type FractalRing struct {
+	ID               string   `json:"id"`
+	CooperationRings []string `json:"cooperation_rings"`
+	VerificationTeam []string `json:"verification_team"`
+}
+
+func (t *Trader) checkForFractalRings() (fractal *FractalRing) {
 	if len(t.Data.SoloRings) < FractalMin {
 		return nil
 	}
@@ -22,7 +28,7 @@ func (t *Trader) checkForFractalRings() (team []string) {
 	}
 
 	selectedRings := tools.RandomSelect(t.Data.SoloRings, k)
-	team = t.selectVerificationTeam(selectedRings)
+	team := t.selectVerificationTeam(selectedRings)
 	if team == nil {
 		return nil
 	}
@@ -36,7 +42,12 @@ func (t *Trader) checkForFractalRings() (team []string) {
 
 		t.Data.Rings[selectedRings[i]] = ring
 	}
-	return
+
+	return &FractalRing{
+		ID:               tools.SHA256Str(selectedRings),
+		CooperationRings: selectedRings,
+		VerificationTeam: team,
+	}
 }
 
 func (t *Trader) selectVerificationTeam(rings []string) []string {

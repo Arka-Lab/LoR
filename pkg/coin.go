@@ -42,7 +42,7 @@ func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
 	}
 }
 
-func (t *Trader) SaveCoin(coin CoinTable) (*CooperationTable, []string, error) {
+func (t *Trader) SaveCoin(coin CoinTable) (*CooperationTable, *FractalRing, error) {
 	if _, ok := t.Data.Coins[coin.ID]; ok {
 		return nil, nil, ErrCoinAlreadyExist
 	}

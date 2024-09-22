@@ -45,10 +45,3 @@ func createTraders(numTraders, numTypes int) ([]*pkg.Trader, error) {
 	}
 	return traders, nil
 }
-
-func analyzeTraders(numTraders int, rings [][]*pkg.CooperationTable, fractals [][][]string) {
-	fmt.Println("Trader statistics:")
-	for i := 0; i < numTraders; i++ {
-		fmt.Printf("\tTrader %d has %d cooperation rings and %d fractal rings.\n", i+1, len(rings[i]), len(fractals[i]))
-	}
-}
