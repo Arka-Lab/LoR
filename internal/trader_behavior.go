@@ -41,6 +41,7 @@ func RandomBehavior(numTraders, numTypes, numCoins int) error {
 
 	analyzeTraders(numTraders, rings, fractals)
 	analyzeRings(numTypes, traders, rings)
+	analyzeFractals(rings, fractals)
 
 	print("Random behavior simulation completed.")
 	return nil

@@ -2,6 +2,8 @@ package internal
 
 import (
 	"fmt"
+	"math/rand"
+	"slices"
 
 	"github.com/Arka-Lab/LoR/pkg"
 )
@@ -36,5 +38,59 @@ func analyzeRings(numTypes int, traders []*pkg.Trader, rings [][]*pkg.Cooperatio
 	fmt.Println("Coin statistics:")
 	for i := 1; i <= len(traders); i++ {
 		fmt.Printf("\tCoins in at least %d cooperation rings: %d\n", i, counter[i])
+	}
+}
+
+func analyzeFractals(rings [][]*pkg.CooperationTable, fractals [][]*pkg.FractalRing) {
+	coins := make(map[string][]string)
+	for i, traderFractals := range fractals {
+		cooperations := make(map[string]*pkg.CooperationTable)
+		for _, ring := range rings[i] {
+			cooperations[ring.ID] = ring
+		}
+
+		for _, fractal := range traderFractals {
+			for _, ringID := range fractal.CooperationRings {
+				ring := cooperations[ringID]
+				coins[fractal.ID] = append(coins[fractal.ID], ring.Members...)
+			}
+			slices.Sort(coins[fractal.ID])
+		}
+	}
+
+	hasFractal := make([]int, 0)
+	for i, traderFractals := range fractals {
+		if len(traderFractals) > 0 {
+			hasFractal = append(hasFractal, i)
+		}
+	}
+
+	T := 1000000
+	fmt.Println("Fractal statistics:")
+	if len(hasFractal) == 0 {
+		fmt.Println("\tNo fractal rings found.")
+		return
+	}
+	for i, prev, total := 1, 1, 0; i <= T; i++ {
+		index1 := hasFractal[rand.Intn(len(hasFractal))]
+		idx1 := rand.Intn(len(fractals[index1]))
+		fractal1 := fractals[index1][idx1]
+
+		index2 := hasFractal[rand.Intn(len(hasFractal))]
+		idx2 := rand.Intn(len(fractals[index2]))
+		fractal2 := fractals[index2][idx2]
+
+		commons := 0
+		for _, coinID := range coins[fractal1.ID] {
+			if _, ok := slices.BinarySearch(coins[fractal2.ID], coinID); ok {
+				commons++
+			}
+		}
+		total += commons
+
+		if i == prev {
+			fmt.Printf("\tAverage number of common coins between two fractal rings after %d iterations: %.2f\n", i, float64(total)/float64(i))
+			prev *= 10
+		}
 	}
 }
