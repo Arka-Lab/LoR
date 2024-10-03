@@ -8,19 +8,16 @@ import (
 	"math/rand"
 )
 
-func RandomSelect(data []string, k int) []string {
+func RandomIndexes(n, k int) (result []int) {
 	rnd := make([]int, 0)
-	index := rand.Intn(len(data))
-	data[0], data[index] = data[index], data[0]
-
+	result = append(result, rand.Intn(n))
 	for i := 1; i < k; i++ {
 		if len(rnd) == 0 {
-			rnd = SHA256Arr(data[:i])
+			rnd = SHA256Arr(result)
 		}
-		index, rnd = rnd[0]%(len(data)-i), rnd[1:]
-		data[i], data[index] = data[index], data[i]
+		result, rnd = append(result, rnd[0]%(n-i)), rnd[1:]
 	}
-	return data[:k]
+	return
 }
 
 func GeneratePrivateKey(size int) (*rsa.PrivateKey, error) {

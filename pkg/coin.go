@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/Arka-Lab/LoR/tools"
@@ -42,32 +44,72 @@ func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
 	}
 }
 
-func (t *Trader) SaveCoin(coin CoinTable) (*CooperationTable, *FractalRing, error) {
-	if _, ok := t.Data.Coins[coin.ID]; ok {
-		return nil, nil, ErrCoinAlreadyExist
-	}
-	if coin.Type >= uint(len(t.Data.RunCoins)) {
-		return nil, nil, ErrInvalidCoinType
-	}
-	if _, ok := t.Data.Traders[coin.BindedOn]; !ok {
-		return nil, nil, ErrTraderNotFound
-	}
-	if _, ok := t.Data.Traders[coin.Owner]; !ok {
-		return nil, nil, ErrTraderNotFound
+func (t *Trader) SaveCoin(coin CoinTable) error {
+	if coin.Status != Run {
+		return errors.New("invalid coin status")
+	} else if coin.Type >= t.Data.Coins.TypeCount {
+		return errors.New("invalid coin type")
+	} else if coin.BindedOn != coin.Owner {
+		return errors.New("invalid coin binded on")
+	} else if trader, ok := t.Data.Traders[coin.Owner]; !ok {
+		return errors.New("trader not found")
+	} else if err := tools.VerifyWithPublicKeyStr(coin.Owner+"-"+strconv.Itoa(int(coin.Type)), coin.ID, trader.PublicKey); err != nil {
+		return errors.New("invalid coin id")
 	}
 
-	t.Data.Coins[coin.ID] = coin
-	t.Data.RunCoins[coin.Type] = append(t.Data.RunCoins[coin.Type], coin.ID)
-
-	ring := t.checkForCooperationRings()
-	if ring != nil {
-		if _, ok := t.Data.Rings[ring.ID]; ok {
-			return nil, nil, ErrRingAlreadyExist
+	if err := t.Data.Coins.AddCoin(coin); err != nil {
+		return err
+	}
+	cooperation := t.checkForCooperationRing()
+	if cooperation != nil {
+		if err := t.Data.Cooperations.AddCooperationRing(cooperation); err != nil {
+			return err
 		}
-
-		t.Data.Rings[ring.ID] = *ring
-		t.Data.SoloRings = append(t.Data.SoloRings, ring.ID)
-		return ring, t.checkForFractalRings(), nil
+		fractal := t.checkForFractalRing()
+		fmt.Println(fractal) // TODO: remove and complete the implementation
 	}
-	return nil, nil, nil
+	return nil
+}
+
+type CoinSet struct {
+	TypeCount uint
+	Coins     map[string]*CoinTable
+	RunCoins  []map[string]*CoinTable
+}
+
+func NewCoinSet(typeCount uint) *CoinSet {
+	set := &CoinSet{
+		TypeCount: typeCount,
+		Coins:     make(map[string]*CoinTable),
+		RunCoins:  make([]map[string]*CoinTable, typeCount+1),
+	}
+	for i := 0; i <= int(typeCount); i++ {
+		set.RunCoins[i] = make(map[string]*CoinTable)
+	}
+	return set
+}
+
+func (cs *CoinSet) GetCoin(id string) *CoinTable {
+	if coin, ok := cs.Coins[id]; ok {
+		return coin
+	}
+	return nil
+}
+
+func (cs *CoinSet) AddCoin(coin CoinTable) error {
+	if _, ok := cs.Coins[coin.ID]; ok {
+		return errors.New("coin already exist")
+	}
+
+	cs.RunCoins[coin.Type][coin.ID] = &coin
+	cs.Coins[coin.ID] = &coin
+	return nil
+}
+
+func (cs *CoinSet) RemoveRunCoin(coinID string) *CoinTable {
+	if coin := cs.GetCoin(coinID); coin != nil {
+		delete(cs.RunCoins[coin.Type], coinID)
+		return coin
+	}
+	return nil
 }
