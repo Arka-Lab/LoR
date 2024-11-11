@@ -2,10 +2,10 @@ package pkg
 
 import (
 	"errors"
+	"reflect"
 	"slices"
 
 	"github.com/Arka-Lab/LoR/tools"
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/rand"
 )
 
@@ -15,50 +15,71 @@ const (
 )
 
 type CooperationTable struct {
-	ID       string   `json:"id"`
-	Weight   float64  `json:"weight"`
-	Next     string   `json:"next"`
-	Prev     string   `json:"prev"`
-	Investor string   `json:"investor"`
-	Rounds   uint     `json:"rounds"`
-	Members  []string `json:"-"`
+	ID          string     `json:"id"`
+	Weight      float64    `json:"weight"`
+	Next        string     `json:"next"`
+	Prev        string     `json:"prev"`
+	Investor    string     `json:"investor"`
+	Rounds      uint       `json:"rounds"`
+	CoinIDs     []string   `json:"-"`
+	UnusedCoins [][]string `json:"-"`
+	FractalID   string     `json:"-"`
 }
 
 func (t *Trader) checkForCooperationRing() *CooperationTable {
-	for _, coins := range t.Data.Coins.RunCoins {
+	unusedCoins := make([][]string, t.Data.CoinTypeCount)
+	for _, coin := range t.Data.Coins {
+		if coin.Prev == "" && coin.Next == "" {
+			unusedCoins[coin.Type] = append(unusedCoins[coin.Type], coin.ID)
+		}
+	}
+
+	for _, coins := range unusedCoins {
 		if len(coins) == 0 {
 			return nil
 		}
 	}
 
-	selectedCoins := selectCooperationRing(t.Data.Coins.RunCoins, "")
+	selectedCoins := selectCooperationRing(unusedCoins, "")
+	cooperationID := tools.SHA256Str(selectedCoins)
 	for i, coinID := range selectedCoins {
-		coin := t.Data.Coins.RemoveRunCoin(coinID)
+		coin := t.Data.Coins[coinID]
+		coin.CooperationID = cooperationID
 		coin.Next = selectedCoins[(i+1)%len(selectedCoins)]
 		coin.Prev = selectedCoins[(i-1+len(selectedCoins))%len(selectedCoins)]
+		t.Data.Coins[coinID] = coin
 	}
 
 	return &CooperationTable{
-		ID:       tools.SHA256Str(selectedCoins),
-		Weight:   t.calculateWeight(selectedCoins),
-		Investor: selectedCoins[0],
-		Rounds:   RoundsCount,
-		Members:  selectedCoins,
+		ID:          cooperationID,
+		Weight:      t.calculateWeight(selectedCoins),
+		Investor:    selectedCoins[0],
+		Rounds:      RoundsCount,
+		CoinIDs:     selectedCoins,
+		UnusedCoins: unusedCoins,
 	}
 }
 
 func (t *Trader) calculateWeight(ring []string) (weight float64) {
 	for _, coinID := range ring {
-		weight += t.Data.Coins.GetCoin(coinID).Amount
+		weight += t.Data.Coins[coinID].Amount
 	}
 	return
 }
 
-func (t *Trader) validateCooperationRing(cooperation *CooperationTable) error {
-	weight := 0.0
-	for i, coinID := range cooperation.Members {
-		coin := t.Data.Coins.GetCoin(coinID)
-		if coin == nil {
+func (t *Trader) validateCooperationRing(cooperation CooperationTable) error {
+	if cooperation.ID != tools.SHA256Str(cooperation.CoinIDs) {
+		return errors.New("invalid cooperation ring id")
+	} else if cooperation.Weight != t.calculateWeight(cooperation.CoinIDs) {
+		return errors.New("invalid cooperation ring weight")
+	} else if cooperation.Investor != cooperation.CoinIDs[0] {
+		return errors.New("invalid cooperation ring investor")
+	} else if cooperation.Rounds != RoundsCount {
+		return errors.New("invalid cooperation ring rounds")
+	}
+
+	for i, coinID := range cooperation.CoinIDs {
+		if coin, ok := t.Data.Coins[coinID]; !ok {
 			return errors.New("coin not found")
 		} else if coin.Status != Run {
 			return errors.New("invalid coin status")
@@ -67,74 +88,29 @@ func (t *Trader) validateCooperationRing(cooperation *CooperationTable) error {
 		} else if coin.Owner != coin.BindedOn {
 			return errors.New("invalid coin owner/binded on")
 		}
-		weight += coin.Amount
 	}
 
-	if cooperation.ID != tools.SHA256Str(cooperation.Members) {
-		return errors.New("invalid cooperation ring id")
-	} else if cooperation.Weight != weight {
-		return errors.New("invalid cooperation ring weight")
-	} else if cooperation.Investor != cooperation.Members[0] {
-		return errors.New("invalid cooperation ring investor")
-	} else if cooperation.Rounds != RoundsCount {
-		return errors.New("invalid cooperation ring rounds")
+	expectedRing := selectCooperationRing(cooperation.UnusedCoins, cooperation.Investor)
+	if !reflect.DeepEqual(expectedRing, cooperation.CoinIDs) {
+		return errors.New("invalid cooperation ring coins")
 	}
 	return nil
 }
 
-type CooperationSet struct {
-	Cooperations map[string]*CooperationTable
-	SoloRings    map[string]*CooperationTable
-}
-
-func NewCooperationSet() *CooperationSet {
-	return &CooperationSet{
-		Cooperations: make(map[string]*CooperationTable),
-		SoloRings:    make(map[string]*CooperationTable),
-	}
-}
-
-func (cs *CooperationSet) AddCooperationRing(cooperation *CooperationTable) error {
-	if _, ok := cs.Cooperations[cooperation.ID]; ok {
-		return errors.New("cooperation ring already exist")
-	}
-
-	cs.Cooperations[cooperation.ID] = cooperation
-	cs.SoloRings[cooperation.ID] = cooperation
-	return nil
-}
-
-func (cs *CooperationSet) GetCooperationRing(id string) *CooperationTable {
-	if cooperation, ok := cs.Cooperations[id]; ok {
-		return cooperation
-	}
-	return nil
-}
-
-func (cs *CooperationSet) RemoveSoloRing(ringID string) *CooperationTable {
-	if cooperation := cs.GetCooperationRing(ringID); cooperation != nil {
-		delete(cs.SoloRings, ringID)
-		return cooperation
-	}
-	return nil
-}
-
-func selectCooperationRing(runCoins []map[string]*CoinTable, investor string) []string {
+func selectCooperationRing(unusedCoins [][]string, investor string) []string {
 	rnd := make([]int, 0)
-	selectedRing := make([]string, len(runCoins))
+	selectedRing := make([]string, len(unusedCoins))
 	if investor == "" {
-		selectedRing[0] = maps.Keys(runCoins[0])[rand.Intn(len(runCoins[0]))]
+		selectedRing[0] = unusedCoins[0][rand.Intn(len(unusedCoins[0]))]
 	} else {
 		selectedRing[0] = investor
 	}
-	for i := 1; i < len(runCoins); i++ {
+	for i := 1; i < len(unusedCoins); i++ {
 		if len(rnd) == 0 {
 			rnd = tools.SHA256Arr(selectedRing)
 		}
-		coins := maps.Keys(runCoins[i])
-		slices.Sort(coins)
-
-		rnd, selectedRing[i] = rnd[1:], coins[rnd[0]%len(runCoins[i])]
+		slices.Sort(unusedCoins[i])
+		rnd, selectedRing[i] = rnd[1:], unusedCoins[i][rnd[0]%len(unusedCoins[i])]
 	}
 	return selectedRing
 }

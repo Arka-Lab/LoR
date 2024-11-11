@@ -7,6 +7,7 @@ import (
 
 	"github.com/Arka-Lab/LoR/tools"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/rand"
 )
 
 const (
@@ -17,38 +18,44 @@ const (
 )
 
 type FractalRing struct {
-	ID               string              `json:"id"`
-	CooperationRings []*CooperationTable `json:"cooperation_rings"`
-	VerificationTeam []string            `json:"verification_team"`
-	SoloRings        []string            `json:"-"`
+	ID               string             `json:"id"`
+	CooperationRings []CooperationTable `json:"cooperation_rings"`
+	VerificationTeam []string           `json:"verification_team"`
+	SoloRings        []string           `json:"-"`
 }
 
 func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
-	soloRings := maps.Keys(t.Data.Cooperations.SoloRings)
-	slices.Sort(soloRings)
+	soloRings := make([]string, 0)
+	for _, cooperation := range t.Data.Cooperations {
+		if cooperation.Next == "" && cooperation.Prev == "" {
+			soloRings = append(soloRings, cooperation.ID)
+		}
+	}
 
-	selectedRing := selectFractalRing(soloRings)
+	selectedRing := selectFractalRing(soloRings, "")
 	if selectedRing == nil {
 		return nil
 	}
 
-	k := len(selectedRing)
-	selectedCooperations := make([]*CooperationTable, k)
-	for i, ringID := range selectedRing {
-		coin := t.Data.Cooperations.RemoveSoloRing(ringID)
-		selectedCooperations[i], coin.Next, coin.Prev = coin, selectedRing[(i+1)%k], selectedRing[(i-1+k)%k]
-	}
-
 	traders := maps.Keys(t.Data.Traders)
-	slices.Sort(traders)
-
-	team := selectVerificationTeam(traders, selectedRing)
+	team := selectVerificationTeam(traders, selectedRing, "")
 	if team == nil {
 		return nil
 	}
 
+	fractalID := tools.SHA256Str(selectedRing)
+	selectedCooperations := make([]CooperationTable, len(selectedRing))
+	for i, ringID := range selectedRing {
+		cooperation := t.Data.Cooperations[ringID]
+		cooperation.FractalID = fractalID
+		cooperation.Next = selectedRing[(i+1)%len(selectedRing)]
+		cooperation.Prev = selectedRing[(i-1+len(selectedRing))%len(selectedRing)]
+		selectedCooperations[i] = cooperation
+		t.Data.Cooperations[ringID] = cooperation
+	}
+
 	return &FractalRing{
-		ID:               tools.SHA256Str(selectedRing),
+		ID:               fractalID,
 		CooperationRings: selectedCooperations,
 		SoloRings:        soloRings,
 		VerificationTeam: team,
@@ -56,56 +63,65 @@ func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
 }
 
 func (t *Trader) validateFractalRing(fractal *FractalRing) error {
-	runCoins := make([]map[string]*CoinTable, len(fractal.CooperationRings))
-	for i := 0; i < len(runCoins); i++ {
-		runCoins[i] = make(map[string]*CoinTable)
-	}
-	for _, coin := range t.Data.Coins.Coins {
-		if coin.Status == Run {
-			runCoins[coin.Type][coin.ID] = coin
-		}
-	}
-
-	selectedRing := make([]string, len(fractal.CooperationRings))
-	for i, cooperation := range fractal.CooperationRings {
+	selectedRings := make([]string, 0, len(fractal.CooperationRings))
+	for _, cooperation := range fractal.CooperationRings {
 		if err := t.validateCooperationRing(cooperation); err != nil {
 			return err
-		} else if cooperation.ID != tools.SHA256Str(selectCooperationRing(runCoins, cooperation.Investor)) {
-			return errors.New("invalid cooperation ring id")
 		}
-
-		selectedRing[i] = cooperation.ID
-		for i, coinID := range cooperation.Members {
-			delete(runCoins[i], coinID)
-		}
+		selectedRings = append(selectedRings, cooperation.ID)
 	}
-
 	traders := maps.Keys(t.Data.Traders)
-	slices.Sort(traders)
 
-	if fractal.ID != tools.SHA256Str(selectedRing) {
+	if fractal.ID != tools.SHA256Str(selectedRings) {
 		return errors.New("invalid fractal ring id")
-	} else if !reflect.DeepEqual(selectedRing, selectFractalRing(fractal.SoloRings)) {
+	} else if !reflect.DeepEqual(selectedRings, selectFractalRing(fractal.SoloRings, selectedRings[0])) {
 		return errors.New("invalid selected cooperation ring")
-	} else if !reflect.DeepEqual(fractal.VerificationTeam, selectVerificationTeam(traders, selectedRing)) {
+	} else if !reflect.DeepEqual(fractal.VerificationTeam, selectVerificationTeam(traders, selectedRings, fractal.VerificationTeam[0])) {
 		return errors.New("invalid verification team")
 	}
 	return nil
 }
 
-func selectFractalRing(soloRings []string) (result []string) {
+func selectFractalRing(soloRings []string, firstRing string) (result []string) {
 	if len(soloRings) < FractalMin {
 		return nil
 	}
-	k := FractalMin + tools.SHA256Int(soloRings)%(FractalMax-FractalMin+1)
+
+	copiedRings := make([]string, len(soloRings))
+	copy(copiedRings, soloRings)
+	slices.Sort(copiedRings)
+
+	k := FractalMin + tools.SHA256Int(copiedRings)%(FractalMax-FractalMin+1)
 	if len(soloRings) < k {
 		return nil
 	}
-	copiedRings := make([]string, len(soloRings))
-	copy(copiedRings, soloRings)
+	result = make([]string, k)
 
-	for _, index := range tools.RandomIndexes(len(copiedRings), k) {
-		result = append(result, copiedRings[index])
+	if firstRing != "" {
+		result[0] = firstRing
+		for i := 0; i < len(copiedRings); i++ {
+			if copiedRings[i] == firstRing {
+				copiedRings[i] = copiedRings[0]
+				copiedRings = copiedRings[1:]
+				break
+			}
+		}
+	} else {
+		index := rand.Intn(len(soloRings))
+		result[0] = copiedRings[index]
+
+		copiedRings[index] = copiedRings[0]
+		copiedRings = copiedRings[1:]
+	}
+
+	rnd := make([]int, 0)
+	for i := 1; i < k; i++ {
+		if len(rnd) == 0 {
+			rnd = tools.SHA256Arr(result)
+		}
+		index := rnd[0] % len(copiedRings)
+		result[i], rnd = copiedRings[index], rnd[1:]
+
 		copiedRings[index] = copiedRings[0]
 		copiedRings = copiedRings[1:]
 	}
