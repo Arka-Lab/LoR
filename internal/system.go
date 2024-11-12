@@ -173,7 +173,10 @@ func (system *System) Init(numTraders int, coinTypeCount uint) error {
 		go func() {
 			amount, wallet := rand.Float64()*100, uuid.New().String()
 			trader := pkg.CreateTrader(amount, wallet, coinTypeCount)
+
+			system.Locker.Lock()
 			system.Traders[trader.ID] = trader
+			system.Locker.Unlock()
 			ch <- true
 		}()
 	}

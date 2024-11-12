@@ -37,7 +37,7 @@ func CreateTrader(account float64, wallet string, coinTypeCount uint) *Trader {
 		return nil
 	}
 
-	// time.Sleep(time.Until(time.Now().Truncate(time.Second).Add(time.Second)))
+	time.Sleep(time.Until(time.Now().Truncate(time.Second).Add(time.Second)))
 	ticker := time.NewTicker(RoundLength * time.Millisecond)
 
 	return &Trader{
