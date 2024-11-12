@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Arka-Lab/LoR/internal"
+	"github.com/Arka-Lab/LoR/pkg"
 )
 
 func main() {
@@ -13,7 +14,7 @@ func main() {
 	system := internal.NewSystem()
 	numTraders, numTypes, runTime := 100, 3, 90*time.Second
 
-	logger.Printf("Starting system with %d traders and %d types...\n", numTraders, numTypes)
+	logger.Printf("Starting system with %d traders and %d types (BadBehavior = %.2f%%)...\n", numTraders, numTypes, pkg.BadBehavior*100)
 	system.Init(numTraders, uint(numTypes))
 	logger.Println("System initialized!")
 
@@ -29,8 +30,6 @@ func main() {
 	time.Sleep(runTime)
 	finish <- true
 	<-done
-
 	logger.Println("System stopped!")
-	logger.Println("Number of coins:", len(system.Coins))
-	logger.Println("Number of fractal rings:", len(system.Fractals))
+	internal.AnalyzeSystem(system)
 }
