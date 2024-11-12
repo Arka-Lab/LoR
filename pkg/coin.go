@@ -10,9 +10,9 @@ import (
 type Status int
 
 const (
-	Expired Status = iota - 2
+	Run Status = iota
 	Blocked
-	Run
+	Expired
 	Paid
 )
 

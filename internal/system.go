@@ -111,13 +111,6 @@ func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
 	if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
 		return errors.New("fractal ring verification failed")
 	}
-	// for _, traderID := range fractal.VerificationTeam {
-	// 	if trader, ok := system.Traders[traderID]; !ok {
-	// 		return errors.New("trader not found")
-	// 	} else if err := trader.SubmitRing(fractal); err != nil {
-	// 		return err
-	// 	}
-	// }
 	return nil
 }
 
@@ -167,12 +160,19 @@ func (system *System) CreateRandomCoins(trader *pkg.Trader, done <-chan bool, er
 	}
 }
 
-func (system *System) Init(numTraders int, coinTypeCount uint) error {
+func (system *System) Init(numTraders, numRandomVoters, numBadVoters int, coinTypeCount uint) error {
 	ch := make(chan bool)
 	for i := 0; i < numTraders; i++ {
 		go func() {
+			var trader *pkg.Trader
 			amount, wallet := rand.Float64()*100, uuid.New().String()
-			trader := pkg.CreateTrader(amount, wallet, coinTypeCount)
+			if i < numRandomVoters {
+				trader = pkg.CreateTrader(pkg.RandomVote, amount, wallet, coinTypeCount)
+			} else if i < numRandomVoters+numBadVoters {
+				trader = pkg.CreateTrader(pkg.BadVote, amount, wallet, coinTypeCount)
+			} else {
+				trader = pkg.CreateTrader(pkg.Normal, amount, wallet, coinTypeCount)
+			}
 
 			system.Locker.Lock()
 			system.Traders[trader.ID] = trader
@@ -180,10 +180,14 @@ func (system *System) Init(numTraders int, coinTypeCount uint) error {
 			ch <- true
 		}()
 	}
+	log.Printf("%d traders created: %d random voters, %d bad voters\n", numTraders, numRandomVoters, numBadVoters)
 	for i := 0; i < numTraders; i++ {
 		<-ch
 	}
+	return system.saveTraders()
+}
 
+func (system *System) saveTraders() error {
 	for _, trader1 := range system.Traders {
 		for _, trader2 := range system.Traders {
 			if err := trader1.SaveTrader(*trader2); err != nil {

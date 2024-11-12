@@ -14,7 +14,16 @@ const (
 	BadBehavior = 0.1
 )
 
+type BehaviorType int
+
+const (
+	Normal BehaviorType = iota
+	RandomVote
+	BadVote
+)
+
 type TraderData struct {
+	TraderType    BehaviorType
 	CoinTypeCount uint
 	Ticker        *time.Ticker
 	PrivateKey    *rsa.PrivateKey
@@ -31,7 +40,7 @@ type Trader struct {
 	Data      *TraderData    `json:"-"`
 }
 
-func CreateTrader(account float64, wallet string, coinTypeCount uint) *Trader {
+func CreateTrader(traderType BehaviorType, account float64, wallet string, coinTypeCount uint) *Trader {
 	privateKey, err := tools.GeneratePrivateKey(KeySize)
 	if err != nil {
 		return nil
@@ -47,6 +56,7 @@ func CreateTrader(account float64, wallet string, coinTypeCount uint) *Trader {
 		PublicKey: &privateKey.PublicKey,
 		Data: &TraderData{
 			Ticker:        ticker,
+			TraderType:    traderType,
 			PrivateKey:    privateKey,
 			CoinTypeCount: coinTypeCount,
 			Traders:       make(map[string]Trader),
@@ -132,16 +142,3 @@ func (t *Trader) removeCooperatinRing(cooperationID string) {
 	}
 	delete(t.Data.Cooperations, cooperationID)
 }
-
-// submission:
-// 1. confirmation of verification team (DONE)
-// 2. confirmation of fractal ring (DONE)
-// 3. lock mechanism
-
-// round checking:
-// 1. get acknowledge from all traders at the end of the round
-// 2. if not, then the round will be expired
-
-// payment rules:
-// 1. run at each checkpoint
-// 2. if the coin status is "RUN", then the payment will be done and status becomes "PAID"/"TERMINATED"

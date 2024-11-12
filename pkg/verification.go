@@ -13,8 +13,14 @@ func (t *Trader) SubmitRing(ring *FractalRing) error {
 	if err := t.validateFractalRing(ring); err != nil {
 		return err
 	}
+	return t.Vote()
+}
 
-	if rand.Float32() < BadBehavior {
+func (t *Trader) Vote() error {
+	if t.Data.TraderType == BadVote {
+		return errors.New("bad behavior")
+	}
+	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
 		return errors.New("bad behavior")
 	}
 	return nil
