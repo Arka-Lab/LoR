@@ -44,26 +44,23 @@ func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
 	}
 }
 
-func (t *Trader) SaveCoin(coin CoinTable, tryToRing bool) (*FractalRing, error) {
+func (t *Trader) SaveCoin(coin CoinTable) error {
 	if coin.Status != Run {
-		return nil, errors.New("invalid coin status")
+		return errors.New("invalid coin status")
 	} else if coin.Type >= t.Data.CoinTypeCount {
-		return nil, errors.New("invalid coin type")
+		return errors.New("invalid coin type")
 	} else if coin.BindedOn != coin.Owner {
-		return nil, errors.New("invalid coin binded on")
+		return errors.New("invalid coin binded on")
 	} else if trader, ok := t.Data.Traders[coin.Owner]; !ok {
-		return nil, errors.New("trader not found")
+		return errors.New("trader not found")
 	} else if err := tools.VerifyWithPublicKeyStr(coin.Owner+"-"+fmt.Sprint(coin.Type), coin.ID, trader.PublicKey); err != nil {
-		return nil, errors.New("invalid coin id")
+		return errors.New("invalid coin id")
 	} else if coin.Next != "" || coin.Prev != "" {
-		return nil, errors.New("coin is already in a ring")
+		return errors.New("coin is already in a ring")
 	} else if _, ok := t.Data.Coins[coin.ID]; ok {
-		return nil, errors.New("coin already exist")
+		return errors.New("coin already exist")
 	}
 
 	t.Data.Coins[coin.ID] = coin
-	if tryToRing {
-		return t.CheckForRings(), nil
-	}
-	return nil, nil
+	return nil
 }

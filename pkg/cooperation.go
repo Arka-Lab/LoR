@@ -11,7 +11,7 @@ import (
 
 const (
 	RoundsCount = 10
-	RoundLength = 100
+	RoundLength = 1000
 )
 
 type CooperationTable struct {

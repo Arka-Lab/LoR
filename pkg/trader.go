@@ -10,16 +10,17 @@ import (
 )
 
 const (
-	KeySize = 2048
+	KeySize     = 2048
+	BadBehavior = 0.1
 )
 
 type TraderData struct {
 	CoinTypeCount uint
+	Ticker        *time.Ticker
 	PrivateKey    *rsa.PrivateKey
 	Traders       map[string]Trader
 	Coins         map[string]CoinTable
 	Cooperations  map[string]CooperationTable
-	Ticker        *time.Ticker
 }
 
 type Trader struct {
@@ -45,12 +46,12 @@ func CreateTrader(account float64, wallet string, coinTypeCount uint) *Trader {
 		Wallet:    wallet,
 		PublicKey: &privateKey.PublicKey,
 		Data: &TraderData{
+			Ticker:        ticker,
 			PrivateKey:    privateKey,
 			CoinTypeCount: coinTypeCount,
 			Traders:       make(map[string]Trader),
 			Coins:         make(map[string]CoinTable),
 			Cooperations:  make(map[string]CooperationTable),
-			Ticker:        ticker,
 		},
 	}
 }

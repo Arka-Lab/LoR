@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"slices"
 
 	"golang.org/x/exp/rand"
@@ -11,6 +12,10 @@ import (
 func (t *Trader) SubmitRing(ring *FractalRing) error {
 	if err := t.validateFractalRing(ring); err != nil {
 		return err
+	}
+
+	if rand.Float32() < BadBehavior {
+		return errors.New("bad behavior")
 	}
 	return nil
 }

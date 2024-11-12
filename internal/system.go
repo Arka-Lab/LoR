@@ -12,83 +12,74 @@ import (
 )
 
 const (
-	Debug = true
+	Debug = false
 )
 
 type System struct {
-	Locker   sync.Mutex
-	Traders  map[string]*pkg.Trader
-	Coins    map[string]pkg.CoinTable
-	Fractals map[string]*pkg.FractalRing
+	Locker        sync.Mutex
+	SubmitCount   map[string]int
+	AcceptedCount map[string]int
+	Traders       map[string]*pkg.Trader
+	Coins         map[string]pkg.CoinTable
+	Fractals      map[string]*pkg.FractalRing
 }
 
 func NewSystem() *System {
 	return &System{
-		Locker:   sync.Mutex{},
-		Traders:  make(map[string]*pkg.Trader),
-		Coins:    make(map[string]pkg.CoinTable),
-		Fractals: make(map[string]*pkg.FractalRing),
+		Locker:        sync.Mutex{},
+		SubmitCount:   make(map[string]int),
+		AcceptedCount: make(map[string]int),
+		Traders:       make(map[string]*pkg.Trader),
+		Coins:         make(map[string]pkg.CoinTable),
+		Fractals:      make(map[string]*pkg.FractalRing),
 	}
 }
 
 func (system *System) ProcessCoin(coin pkg.CoinTable) error {
-	trader := system.Traders[coin.Owner]
-	if trader == nil {
-		return errors.New("trader not found")
-	}
-
 	system.Locker.Lock()
 	system.Coins[coin.ID] = coin
-	fractal, err := trader.SaveCoin(coin, true)
-	if err != nil {
-		system.Locker.Unlock()
-		return err
+	for _, t := range system.Traders {
+		if err := t.SaveCoin(coin); err != nil {
+			system.Locker.Unlock()
+			return err
+		}
 	}
 
-	for _, t := range system.Traders {
-		if t.ID != trader.ID {
-			if _, err := t.SaveCoin(coin, false); err != nil {
+	for index, traderID := range system.getShuffledTraderIDs(coin.Owner) {
+		trader := system.Traders[traderID]
+		if fractal := trader.CheckForRings(); fractal != nil {
+			system.SubmitCount[traderID]++
+			if err := system.processFractal(trader, fractal); err != nil {
 				system.Locker.Unlock()
 				return err
+			} else {
+				if Debug {
+					log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
+				}
+				system.Locker.Unlock()
+				return nil
 			}
 		}
 	}
 
-	if fractal == nil {
-		fractal = system.checkForAnotherFractal(trader.ID)
-		if fractal == nil {
-			system.Locker.Unlock()
-			return nil
-		}
-	}
-
-	if err := system.processFractal(trader, fractal); err != nil {
-		system.Locker.Unlock()
-		return err
-	}
 	system.Locker.Unlock()
-
 	return nil
 }
 
-func (system *System) checkForAnotherFractal(traderID string) *pkg.FractalRing {
-	traderIDs := make([]string, 0)
-	for id := range system.Traders {
-		if id == traderID {
-			traderIDs = append(traderIDs, id)
+func (system *System) getShuffledTraderIDs(firstID string) (result []string) {
+	for traderID := range system.Traders {
+		if traderID != firstID {
+			result = append(result, traderID)
 		}
 	}
-	rand.Shuffle(len(traderIDs), func(i, j int) {
-		traderIDs[i], traderIDs[j] = traderIDs[j], traderIDs[i]
+	rand.Shuffle(len(result), func(i, j int) {
+		result[i], result[j] = result[j], result[i]
 	})
 
-	for _, id := range traderIDs {
-		trader := system.Traders[id]
-		if fractal := trader.CheckForRings(); fractal != nil {
-			return fractal
-		}
+	if firstID == "" {
+		result = append([]string{firstID}, result...)
 	}
-	return nil
+	return
 }
 
 func (system *System) processFractal(trader *pkg.Trader, fractal *pkg.FractalRing) error {
@@ -103,17 +94,30 @@ func (system *System) processFractal(trader *pkg.Trader, fractal *pkg.FractalRin
 		return err
 	}
 	system.Fractals[fractal.ID] = fractal
+	system.AcceptedCount[trader.ID]++
 	return nil
 }
 
 func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
+	totalErrors := []error{}
 	for _, traderID := range fractal.VerificationTeam {
 		if trader, ok := system.Traders[traderID]; !ok {
 			return errors.New("trader not found")
 		} else if err := trader.SubmitRing(fractal); err != nil {
-			return err
+			totalErrors = append(totalErrors, err)
 		}
 	}
+
+	if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
+		return errors.New("fractal ring verification failed")
+	}
+	// for _, traderID := range fractal.VerificationTeam {
+	// 	if trader, ok := system.Traders[traderID]; !ok {
+	// 		return errors.New("trader not found")
+	// 	} else if err := trader.SubmitRing(fractal); err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -204,7 +208,9 @@ func (system *System) Start(finish <-chan bool) {
 		case err := <-errors:
 			if Debug {
 				log.Println("Error:", err)
-				syscall.Exit(0)
+				if err.Error() != "bad behavior" {
+					syscall.Exit(1)
+				}
 			}
 		case <-finish:
 			i := 0
