@@ -34,13 +34,27 @@ func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
 		}
 	}
 
-	selectedRing := selectFractalRing(soloRings, "")
+	var selectedRing []string
+	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+		selectedRing = selectRandomFractal(soloRings)
+	} else if t.Data.TraderType == BadVote {
+		selectedRing = selectRandomFractal(soloRings)
+	} else {
+		selectedRing = selectFractalRing(soloRings, "")
+	}
 	if selectedRing == nil {
 		return nil
 	}
 
+	var team []string
 	traders := maps.Keys(t.Data.Traders)
-	team := selectVerificationTeam(traders, selectedRing, "")
+	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+		team = selectRandomVerification(traders)
+	} else if t.Data.TraderType == BadVote {
+		team = selectRandomVerification(traders)
+	} else {
+		team = selectVerificationTeam(traders, selectedRing, "")
+	}
 	if team == nil {
 		return nil
 	}
@@ -65,7 +79,7 @@ func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
 	}
 }
 
-func (t *Trader) validateFractalRing(fractal *FractalRing) error {
+func (t *Trader) ValidateFractalRing(fractal *FractalRing) error {
 	selectedRings := make([]string, 0, len(fractal.CooperationRings))
 	for _, cooperation := range fractal.CooperationRings {
 		if err := t.validateCooperationRing(cooperation); err != nil {
@@ -83,6 +97,18 @@ func (t *Trader) validateFractalRing(fractal *FractalRing) error {
 		return errors.New("invalid verification team")
 	}
 	return nil
+}
+
+func selectRandomFractal(soloRings []string) (result []string) {
+	if len(soloRings) < FractalMin {
+		return nil
+	}
+
+	randomIndices := tools.RandomIndexes(len(soloRings), rand.Intn(min(FractalMax, len(soloRings))-FractalMin+1)+FractalMin)
+	for _, index := range randomIndices {
+		result = append(result, soloRings[index])
+	}
+	return
 }
 
 func selectFractalRing(soloRings []string, firstRing string) (result []string) {

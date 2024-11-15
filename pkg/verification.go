@@ -10,20 +10,41 @@ import (
 )
 
 func (t *Trader) SubmitRing(ring *FractalRing) error {
-	if err := t.validateFractalRing(ring); err != nil {
+	if err := t.ValidateFractalRing(ring); err != nil {
+		validErrors := []string{"invalid selected cooperation ring", "invalid verification team", "invalid cooperation ring coins"}
+		if !slices.Contains(validErrors, err.Error()) {
+			return err
+		}
+
+		if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+			return nil
+		} else if t.Data.TraderType == BadVote {
+			return nil
+		}
 		return err
 	}
 	return t.Vote()
 }
 
 func (t *Trader) Vote() error {
-	if t.Data.TraderType == BadVote {
-		return errors.New("bad behavior")
-	}
 	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+		return errors.New("bad behavior")
+	} else if t.Data.TraderType == BadVote {
 		return errors.New("bad behavior")
 	}
 	return nil
+}
+
+func selectRandomVerification(traders []string) (result []string) {
+	if len(traders) < VerificationMin {
+		return nil
+	}
+
+	randomIndices := tools.RandomIndexes(len(traders), rand.Intn(len(traders)))
+	for _, index := range randomIndices {
+		result = append(result, traders[index])
+	}
+	return
 }
 
 func selectVerificationTeam(traders []string, ring []string, firstOne string) (team []string) {

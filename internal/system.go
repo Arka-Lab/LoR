@@ -2,7 +2,6 @@ package internal
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"math/rand"
 	"sync"
@@ -13,26 +12,30 @@ import (
 )
 
 const (
-	Debug = true
+	Debug = false
 )
 
 type System struct {
-	Locker        sync.Mutex
-	SubmitCount   map[string]int
-	AcceptedCount map[string]int
-	Traders       map[string]*pkg.Trader
-	Coins         map[string]pkg.CoinTable
-	Fractals      map[string]*pkg.FractalRing
+	BadAcceptCount int
+	BadRejectCount int
+	Locker         sync.Mutex
+	SubmitCount    map[string]int
+	AcceptedCount  map[string]int
+	Traders        map[string]*pkg.Trader
+	Coins          map[string]pkg.CoinTable
+	Fractals       map[string]*pkg.FractalRing
 }
 
 func NewSystem() *System {
 	return &System{
-		Locker:        sync.Mutex{},
-		SubmitCount:   make(map[string]int),
-		AcceptedCount: make(map[string]int),
-		Traders:       make(map[string]*pkg.Trader),
-		Coins:         make(map[string]pkg.CoinTable),
-		Fractals:      make(map[string]*pkg.FractalRing),
+		BadAcceptCount: 0,
+		BadRejectCount: 0,
+		Locker:         sync.Mutex{},
+		SubmitCount:    make(map[string]int),
+		AcceptedCount:  make(map[string]int),
+		Traders:        make(map[string]*pkg.Trader),
+		Coins:          make(map[string]pkg.CoinTable),
+		Fractals:       make(map[string]*pkg.FractalRing),
 	}
 }
 
@@ -51,10 +54,17 @@ func (system *System) ProcessCoin(coin pkg.CoinTable) error {
 		trader := system.Traders[traderID]
 		if fractal := trader.CheckForRings(); fractal != nil {
 			system.SubmitCount[traderID]++
+			validationError := trader.ValidateFractalRing(fractal)
 			if err := system.processFractal(trader, fractal); err != nil {
+				if validationError == nil {
+					system.BadRejectCount++
+				}
 				return err
 			}
 
+			if validationError != nil {
+				system.BadAcceptCount++
+			}
 			if Debug {
 				log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
 			}
@@ -110,8 +120,6 @@ func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
 	}
 
 	if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
-		fmt.Println(len(totalErrors), len(fractal.VerificationTeam))
-		fmt.Println(totalErrors[0])
 		return errors.New("fractal ring verification failed")
 	}
 	return nil

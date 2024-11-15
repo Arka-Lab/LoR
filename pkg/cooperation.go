@@ -39,7 +39,15 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 		}
 	}
 
-	selectedCoins := selectCooperationRing(unusedCoins, "")
+	var selectedCoins []string
+	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+		selectedCoins = selectRandomCooperation(unusedCoins)
+	} else if t.Data.TraderType == BadVote {
+		selectedCoins = selectRandomCooperation(unusedCoins)
+	} else {
+		selectedCoins = selectCooperationRing(unusedCoins, "")
+	}
+
 	cooperationID := tools.SHA256Str(selectedCoins)
 	for i, coinID := range selectedCoins {
 		coin := t.Data.Coins[coinID]
@@ -89,6 +97,14 @@ func (t *Trader) validateCooperationRing(cooperation CooperationTable) error {
 		return errors.New("invalid cooperation ring coins")
 	}
 	return nil
+}
+
+func selectRandomCooperation(unusedCoins [][]string) []string {
+	selectedRing := make([]string, len(unusedCoins))
+	for i := 0; i < len(unusedCoins); i++ {
+		selectedRing[i] = unusedCoins[i][rand.Intn(len(unusedCoins[i]))]
+	}
+	return selectedRing
 }
 
 func selectCooperationRing(unusedCoins [][]string, investor string) []string {
