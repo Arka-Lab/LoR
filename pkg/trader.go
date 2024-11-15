@@ -142,3 +142,15 @@ func (t *Trader) removeCooperatinRing(cooperationID string) {
 	}
 	delete(t.Data.Cooperations, cooperationID)
 }
+
+func (t *Trader) UpdateBalance(traderID string, amount float64) error {
+	if trader, ok := t.Data.Traders[traderID]; !ok {
+		return errors.New("trader not found")
+	} else if trader.Account+amount < 0 {
+		return errors.New("insufficient account")
+	} else {
+		trader.Account += amount
+		t.Data.Traders[traderID] = trader
+	}
+	return nil
+}

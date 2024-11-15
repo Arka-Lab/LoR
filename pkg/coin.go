@@ -23,24 +23,25 @@ type CoinTable struct {
 	Type          uint    `json:"type"`
 	Next          string  `json:"next"`
 	Prev          string  `json:"prev"`
-	BindedOn      string  `json:"binded_on"`
 	Owner         string  `json:"owner"`
 	CooperationID string  `json:"-"`
 }
 
 func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
+	if t.Account < amount {
+		return nil
+	}
 	id, err := tools.SignWithPrivateKeyStr(t.ID+"-"+fmt.Sprint(coinType), t.Data.PrivateKey)
 	if err != nil {
 		return nil
 	}
 
 	return &CoinTable{
-		ID:       id,
-		Amount:   amount,
-		Status:   Run,
-		Type:     coinType,
-		BindedOn: t.ID,
-		Owner:    t.ID,
+		ID:     id,
+		Amount: amount,
+		Status: Run,
+		Type:   coinType,
+		Owner:  t.ID,
 	}
 }
 
@@ -49,10 +50,10 @@ func (t *Trader) SaveCoin(coin CoinTable) error {
 		return errors.New("invalid coin status")
 	} else if coin.Type >= t.Data.CoinTypeCount {
 		return errors.New("invalid coin type")
-	} else if coin.BindedOn != coin.Owner {
-		return errors.New("invalid coin binded on")
 	} else if trader, ok := t.Data.Traders[coin.Owner]; !ok {
 		return errors.New("trader not found")
+	} else if trader.Account < coin.Amount {
+		return errors.New("insufficient account")
 	} else if err := tools.VerifyWithPublicKeyStr(coin.Owner+"-"+fmt.Sprint(coin.Type), coin.ID, trader.PublicKey); err != nil {
 		return errors.New("invalid coin id")
 	} else if coin.Next != "" || coin.Prev != "" {
@@ -61,6 +62,16 @@ func (t *Trader) SaveCoin(coin CoinTable) error {
 		return errors.New("coin already exist")
 	}
 
+	trader := t.Data.Traders[coin.Owner]
+	trader.Account -= coin.Amount
+	t.Data.Coins[coin.ID] = coin
+	return nil
+}
+
+func (t *Trader) UpdateCoin(coin CoinTable) error {
+	if _, ok := t.Data.Coins[coin.ID]; !ok {
+		return errors.New("coin not found")
+	}
 	t.Data.Coins[coin.ID] = coin
 	return nil
 }

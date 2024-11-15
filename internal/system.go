@@ -52,13 +52,17 @@ func (system *System) ProcessCoin(coin pkg.CoinTable) error {
 			if err := system.processFractal(trader, fractal); err != nil {
 				system.Locker.Unlock()
 				return err
-			} else {
-				if Debug {
-					log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
-				}
-				system.Locker.Unlock()
-				return nil
 			}
+
+			if Debug {
+				log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
+			}
+			if err := system.RunFractal(fractal); err != nil {
+				return err
+			}
+
+			system.Locker.Unlock()
+			return nil
 		}
 	}
 
@@ -86,11 +90,9 @@ func (system *System) processFractal(trader *pkg.Trader, fractal *pkg.FractalRin
 	if err := system.verifyFractal(fractal); err != nil {
 		trader.RemoveFractalRing(fractal.ID)
 		return err
-	}
-	if err := system.blockCoins(fractal); err != nil {
+	} else if err := system.checkCoins(fractal); err != nil {
 		return err
-	}
-	if err := system.informOthers(fractal); err != nil {
+	} else if err := system.informOthers(fractal); err != nil {
 		return err
 	}
 	system.Fractals[fractal.ID] = fractal
@@ -114,7 +116,7 @@ func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
 	return nil
 }
 
-func (system *System) blockCoins(fractal *pkg.FractalRing) error {
+func (system *System) checkCoins(fractal *pkg.FractalRing) error {
 	for _, ring := range fractal.CooperationRings {
 		for _, coinID := range ring.CoinIDs {
 			if coin, ok := system.Coins[coinID]; !ok {
@@ -143,13 +145,63 @@ func (system *System) informOthers(fractal *pkg.FractalRing) error {
 	return nil
 }
 
+func (system *System) RunFractal(fractal *pkg.FractalRing) error {
+	for round := 0; round < pkg.RoundsCount; round++ {
+		for _, traderID := range fractal.VerificationTeam {
+			if trader, ok := system.Traders[traderID]; !ok {
+				return errors.New("trader not found")
+			} else if err := trader.Vote(); err != nil {
+				if err2 := system.applyRounds(fractal, round); err2 != nil {
+					return err2
+				}
+				return err
+			}
+		}
+	}
+
+	return system.applyRounds(fractal, pkg.RoundsCount)
+}
+
+func (system *System) applyRounds(fractal *pkg.FractalRing, round int) error {
+	for _, ring := range fractal.CooperationRings {
+		money := system.Coins[ring.CoinIDs[0]].Amount * float64(round) / pkg.RoundsCount
+		if err := system.applyRing(ring, money, round); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (system *System) applyRing(ring pkg.CooperationTable, money float64, round int) error {
+	for _, coinID := range ring.CoinIDs {
+		coin := system.Coins[coinID]
+		amount := money * coin.Amount / ring.Weight
+		if round < pkg.RoundsCount {
+			coin.Status = pkg.Expired
+		} else {
+			coin.Status = pkg.Paid
+			amount += pkg.FractalPrize
+		}
+
+		for _, trader := range system.Traders {
+			if err := trader.UpdateBalance(coin.Owner, amount); err != nil {
+				return err
+			}
+			if err := trader.UpdateCoin(coin); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (system *System) CreateRandomCoins(trader *pkg.Trader, done <-chan bool, errors chan<- error) {
 	for {
 		select {
 		case <-done:
 			return
 		case <-trader.Data.Ticker.C:
-			amount := rand.Float64() * 100
+			amount := rand.Float64() * 10
 			coinType := rand.Intn(int(trader.Data.CoinTypeCount))
 			if coin := trader.CreateCoin(amount, uint(coinType)); coin != nil {
 				if err := system.ProcessCoin(*coin); err != nil {
@@ -165,7 +217,7 @@ func (system *System) Init(numTraders, numRandomVoters, numBadVoters int, coinTy
 	for i := 0; i < numTraders; i++ {
 		go func() {
 			var trader *pkg.Trader
-			amount, wallet := rand.Float64()*100, uuid.New().String()
+			amount, wallet := rand.Float64()*1000, uuid.New().String()
 			if i < numRandomVoters {
 				trader = pkg.CreateTrader(pkg.RandomVote, amount, wallet, coinTypeCount)
 			} else if i < numRandomVoters+numBadVoters {

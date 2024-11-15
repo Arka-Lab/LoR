@@ -20,7 +20,6 @@ type CooperationTable struct {
 	Next        string     `json:"next"`
 	Prev        string     `json:"prev"`
 	Investor    string     `json:"investor"`
-	Rounds      uint       `json:"rounds"`
 	CoinIDs     []string   `json:"-"`
 	UnusedCoins [][]string `json:"-"`
 	FractalID   string     `json:"-"`
@@ -54,14 +53,13 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 		ID:          cooperationID,
 		Weight:      t.calculateWeight(selectedCoins),
 		Investor:    selectedCoins[0],
-		Rounds:      RoundsCount,
 		CoinIDs:     selectedCoins,
 		UnusedCoins: unusedCoins,
 	}
 }
 
 func (t *Trader) calculateWeight(ring []string) (weight float64) {
-	for _, coinID := range ring {
+	for _, coinID := range ring[1:] {
 		weight += t.Data.Coins[coinID].Amount
 	}
 	return
@@ -74,8 +72,6 @@ func (t *Trader) validateCooperationRing(cooperation CooperationTable) error {
 		return errors.New("invalid cooperation ring weight")
 	} else if cooperation.Investor != cooperation.CoinIDs[0] {
 		return errors.New("invalid cooperation ring investor")
-	} else if cooperation.Rounds != RoundsCount {
-		return errors.New("invalid cooperation ring rounds")
 	}
 
 	for i, coinID := range cooperation.CoinIDs {
@@ -85,8 +81,6 @@ func (t *Trader) validateCooperationRing(cooperation CooperationTable) error {
 			return errors.New("invalid coin status")
 		} else if coin.Type != uint(i) {
 			return errors.New("invalid coin type")
-		} else if coin.Owner != coin.BindedOn {
-			return errors.New("invalid coin owner/binded on")
 		}
 	}
 
