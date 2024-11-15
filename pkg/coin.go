@@ -72,6 +72,10 @@ func (t *Trader) UpdateCoin(coin CoinTable) error {
 	if _, ok := t.Data.Coins[coin.ID]; !ok {
 		return errors.New("coin not found")
 	}
-	t.Data.Coins[coin.ID] = coin
+
+	c := t.Data.Coins[coin.ID]
+	c.Status = coin.Status
+	t.Data.Coins[coin.ID] = c
+
 	return nil
 }

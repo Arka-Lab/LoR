@@ -23,6 +23,7 @@ type FractalRing struct {
 	CooperationRings []CooperationTable `json:"cooperation_rings"`
 	VerificationTeam []string           `json:"verification_team"`
 	SoloRings        []string           `json:"-"`
+	SuccessfulRounds int                `json:"-"`
 }
 
 func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
@@ -60,6 +61,7 @@ func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
 		CooperationRings: selectedCooperations,
 		SoloRings:        soloRings,
 		VerificationTeam: team,
+		SuccessfulRounds: 0,
 	}
 }
 

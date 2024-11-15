@@ -14,7 +14,7 @@ func main() {
 	system := internal.NewSystem()
 	numTraders, numTypes, runTime := 100, 3, 90*time.Second
 
-	logger.Printf("Starting system with %d types (BadBehavior = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
+	logger.Printf("Starting system with %d types (BadBehavior percentage = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
 	system.Init(numTraders, numTraders, 0, uint(numTypes))
 	logger.Println("System initialized!")
 

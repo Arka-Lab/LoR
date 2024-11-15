@@ -137,6 +137,7 @@ func (t *Trader) removeCooperatinRing(cooperationID string) {
 		coin := t.Data.Coins[coinID]
 		coin.Prev = ""
 		coin.Next = ""
+		coin.Status = Run
 		coin.CooperationID = ""
 		t.Data.Coins[coinID] = coin
 	}

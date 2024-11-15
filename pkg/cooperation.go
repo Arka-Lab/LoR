@@ -108,3 +108,19 @@ func selectCooperationRing(unusedCoins [][]string, investor string) []string {
 	}
 	return selectedRing
 }
+
+func (t *Trader) ExpireRing(ring CooperationTable) {
+	for _, coinID := range ring.CoinIDs {
+		coin := t.Data.Coins[coinID]
+		coin.Status = Expired
+		t.Data.Coins[coinID] = coin
+	}
+}
+
+func (t *Trader) PayRing(ring CooperationTable) {
+	for _, coinID := range ring.CoinIDs {
+		coin := t.Data.Coins[coinID]
+		coin.Status = Paid
+		t.Data.Coins[coinID] = coin
+	}
+}
