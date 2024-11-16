@@ -23,6 +23,7 @@ type CooperationTable struct {
 	CoinIDs     []string   `json:"-"`
 	UnusedCoins [][]string `json:"-"`
 	FractalID   string     `json:"-"`
+	IsValid     bool       `json:"-"`
 }
 
 func (t *Trader) checkForCooperationRing() *CooperationTable {
@@ -39,11 +40,11 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 		}
 	}
 
+	isValid := true
 	var selectedCoins []string
-	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
 		selectedCoins = selectRandomCooperation(unusedCoins)
-	} else if t.Data.TraderType == BadVote {
-		selectedCoins = selectRandomCooperation(unusedCoins)
+		isValid = false
 	} else {
 		selectedCoins = selectCooperationRing(unusedCoins, "")
 	}
@@ -63,6 +64,7 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 		Investor:    selectedCoins[0],
 		CoinIDs:     selectedCoins,
 		UnusedCoins: unusedCoins,
+		IsValid:     isValid,
 	}
 }
 

@@ -10,15 +10,13 @@ import (
 )
 
 func (t *Trader) SubmitRing(ring *FractalRing) error {
-	if err := t.ValidateFractalRing(ring); err != nil {
+	if err := t.validateFractalRing(ring); err != nil {
 		validErrors := []string{"invalid selected cooperation ring", "invalid verification team", "invalid cooperation ring coins"}
 		if !slices.Contains(validErrors, err.Error()) {
 			return err
 		}
 
-		if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
-			return nil
-		} else if t.Data.TraderType == BadVote {
+		if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
 			return nil
 		}
 		return err
@@ -27,9 +25,7 @@ func (t *Trader) SubmitRing(ring *FractalRing) error {
 }
 
 func (t *Trader) Vote() error {
-	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
-		return errors.New("bad behavior")
-	} else if t.Data.TraderType == BadVote {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
 		return errors.New("bad behavior")
 	}
 	return nil
@@ -40,7 +36,7 @@ func selectRandomVerification(traders []string) (result []string) {
 		return nil
 	}
 
-	randomIndices := tools.RandomIndexes(len(traders), rand.Intn(len(traders)))
+	randomIndices := tools.RandomIndexes(len(traders), rand.Intn(min(VerificationMax, len(traders))-VerificationMin+1)+VerificationMin)
 	for _, index := range randomIndices {
 		result = append(result, traders[index])
 	}

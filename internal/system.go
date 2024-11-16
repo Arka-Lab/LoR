@@ -75,15 +75,14 @@ func (system *System) processTradersForCoin(coin pkg.CoinTable) error {
 }
 
 func (system *System) handleFractal(trader *pkg.Trader, fractal *pkg.FractalRing, index int) error {
-	validationError := trader.ValidateFractalRing(fractal)
 	if err := system.processFractal(trader, fractal); err != nil {
-		if validationError == nil {
+		if fractal.IsValid {
 			system.BadRejectCount++
 		}
 		return err
 	}
 
-	if validationError != nil {
+	if !fractal.IsValid {
 		system.BadAcceptCount++
 	}
 	if Debug {
@@ -188,7 +187,7 @@ func (system *System) runFractal(fractal *pkg.FractalRing) error {
 }
 
 func (system *System) applyRounds(fractal *pkg.FractalRing, round int) error {
-	fractal.SuccessfulRounds = round
+	fractal.Rounds = round
 	for _, ring := range fractal.CooperationRings {
 		money := system.Coins[ring.CoinIDs[0]].Amount * float64(round) / pkg.RoundsCount
 		if err := system.applyRing(ring, money, round); err != nil {

@@ -15,71 +15,89 @@ const (
 	FractalMax      = 200
 	VerificationMin = 20
 	VerificationMax = 50
-	FractalPrize    = 10
+	FractalPrize    = 1
 )
 
 type FractalRing struct {
 	ID               string             `json:"id"`
+	Rounds           int                `json:"rounds"`
 	CooperationRings []CooperationTable `json:"cooperation_rings"`
 	VerificationTeam []string           `json:"verification_team"`
 	SoloRings        []string           `json:"-"`
-	SuccessfulRounds int                `json:"-"`
+	IsValid          bool               `json:"-"`
 }
 
-func (t *Trader) checkForFractalRing() (fractal *FractalRing) {
+func (t *Trader) checkForFractalRing() *FractalRing {
+	soloRings := t.getSoloRings()
+
+	isValid := true
+	selectedRing := t.getSelectedRing(soloRings, &isValid)
+	if selectedRing == nil {
+		return nil
+	}
+
+	team := t.getVerificationTeam(selectedRing, &isValid)
+	if team == nil {
+		return nil
+	}
+
+	fractalID := tools.SHA256Str(selectedRing)
+	selectedCooperations := t.updateCooperations(selectedRing, fractalID, &isValid)
+
+	return &FractalRing{
+		Rounds:           0,
+		IsValid:          isValid,
+		ID:               fractalID,
+		CooperationRings: selectedCooperations,
+		SoloRings:        soloRings,
+		VerificationTeam: team,
+	}
+}
+
+func (t *Trader) getSoloRings() []string {
 	soloRings := make([]string, 0)
 	for _, cooperation := range t.Data.Cooperations {
 		if cooperation.Next == "" && cooperation.Prev == "" {
 			soloRings = append(soloRings, cooperation.ID)
 		}
 	}
+	return soloRings
+}
 
-	var selectedRing []string
-	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
-		selectedRing = selectRandomFractal(soloRings)
-	} else if t.Data.TraderType == BadVote {
-		selectedRing = selectRandomFractal(soloRings)
-	} else {
-		selectedRing = selectFractalRing(soloRings, "")
+func (t *Trader) getSelectedRing(soloRings []string, isValid *bool) []string {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+		*isValid = false
+		return selectRandomFractal(soloRings)
 	}
-	if selectedRing == nil {
-		return nil
-	}
+	return selectFractalRing(soloRings, "")
+}
 
-	var team []string
+func (t *Trader) getVerificationTeam(selectedRing []string, isValid *bool) []string {
 	traders := maps.Keys(t.Data.Traders)
-	if t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior {
-		team = selectRandomVerification(traders)
-	} else if t.Data.TraderType == BadVote {
-		team = selectRandomVerification(traders)
-	} else {
-		team = selectVerificationTeam(traders, selectedRing, "")
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+		*isValid = false
+		return selectRandomVerification(traders)
 	}
-	if team == nil {
-		return nil
-	}
+	return selectVerificationTeam(traders, selectedRing, "")
+}
 
-	fractalID := tools.SHA256Str(selectedRing)
+func (t *Trader) updateCooperations(selectedRing []string, fractalID string, isValid *bool) []CooperationTable {
 	selectedCooperations := make([]CooperationTable, len(selectedRing))
 	for i, ringID := range selectedRing {
 		cooperation := t.Data.Cooperations[ringID]
+		if !cooperation.IsValid {
+			*isValid = false
+		}
 		cooperation.FractalID = fractalID
 		cooperation.Next = selectedRing[(i+1)%len(selectedRing)]
 		cooperation.Prev = selectedRing[(i-1+len(selectedRing))%len(selectedRing)]
 		selectedCooperations[i] = cooperation
 		t.Data.Cooperations[ringID] = cooperation
 	}
-
-	return &FractalRing{
-		ID:               fractalID,
-		CooperationRings: selectedCooperations,
-		SoloRings:        soloRings,
-		VerificationTeam: team,
-		SuccessfulRounds: 0,
-	}
+	return selectedCooperations
 }
 
-func (t *Trader) ValidateFractalRing(fractal *FractalRing) error {
+func (t *Trader) validateFractalRing(fractal *FractalRing) error {
 	selectedRings := make([]string, 0, len(fractal.CooperationRings))
 	for _, cooperation := range fractal.CooperationRings {
 		if err := t.validateCooperationRing(cooperation); err != nil {
