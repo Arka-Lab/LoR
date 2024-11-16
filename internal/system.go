@@ -44,38 +44,54 @@ func (system *System) ProcessCoin(coin pkg.CoinTable) error {
 	defer system.Locker.Unlock()
 
 	system.Coins[coin.ID] = coin
+	if err := system.saveCoinToTraders(coin); err != nil {
+		return err
+	}
+
+	return system.processTradersForCoin(coin)
+}
+
+func (system *System) saveCoinToTraders(coin pkg.CoinTable) error {
 	for _, t := range system.Traders {
 		if err := t.SaveCoin(coin); err != nil {
 			return err
 		}
 	}
+	return nil
+}
 
+func (system *System) processTradersForCoin(coin pkg.CoinTable) error {
 	for index, traderID := range system.getShuffledTraderIDs(coin.Owner) {
 		trader := system.Traders[traderID]
 		if fractal := trader.CheckForRings(); fractal != nil {
 			system.SubmitCount[traderID]++
-			validationError := trader.ValidateFractalRing(fractal)
-			if err := system.processFractal(trader, fractal); err != nil {
-				if validationError == nil {
-					system.BadRejectCount++
-				}
+			if err := system.handleFractal(trader, fractal, index); err != nil {
 				return err
 			}
-
-			if validationError != nil {
-				system.BadAcceptCount++
-			}
-			if Debug {
-				log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
-			}
-			if err := system.runFractal(fractal); err != nil {
-				return err
-			}
-
 			return nil
 		}
 	}
+	return nil
+}
 
+func (system *System) handleFractal(trader *pkg.Trader, fractal *pkg.FractalRing, index int) error {
+	validationError := trader.ValidateFractalRing(fractal)
+	if err := system.processFractal(trader, fractal); err != nil {
+		if validationError == nil {
+			system.BadRejectCount++
+		}
+		return err
+	}
+
+	if validationError != nil {
+		system.BadAcceptCount++
+	}
+	if Debug {
+		log.Printf("Fractal ring created by trader %d with %d cooperation rings and %d verification team members\n", index+1, len(fractal.CooperationRings), len(fractal.VerificationTeam))
+	}
+	if err := system.runFractal(fractal); err != nil {
+		return err
+	}
 	return nil
 }
 
