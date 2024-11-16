@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/Arka-Lab/LoR/pkg"
 	"github.com/google/uuid"
@@ -233,6 +234,10 @@ func (system *System) CreateRandomCoins(trader *pkg.Trader, done <-chan bool, er
 			return
 		case <-trader.Data.Ticker.C:
 			amount := rand.Float64() * 10
+			if trader.Account < amount {
+				return
+			}
+
 			coinType := rand.Intn(int(trader.Data.CoinTypeCount))
 			if coin := trader.CreateCoin(amount, uint(coinType)); coin != nil {
 				if err := system.ProcessCoin(*coin); err != nil {
@@ -258,8 +263,8 @@ func (system *System) Init(numTraders, numRandomVoters, numBadVoters int, coinTy
 			}
 
 			system.Locker.Lock()
+			defer system.Locker.Unlock()
 			system.Traders[trader.ID] = trader
-			system.Locker.Unlock()
 			ch <- true
 		}()
 	}
@@ -285,15 +290,17 @@ func (system *System) Start(finish <-chan bool) {
 	errors := make(chan error)
 	dones := make([]chan bool, len(system.Traders))
 
-	i := 0
+	i, finished := 0, 0
 	for _, trader := range system.Traders {
 		dones[i] = make(chan bool, 1)
-		go system.CreateRandomCoins(trader, dones[i], errors)
+		go func(index int) {
+			system.CreateRandomCoins(trader, dones[index], errors)
+			finished++
+		}(i)
 		i++
 	}
 
-	finished := false
-	for !finished {
+	for finished < len(system.Traders) {
 		select {
 		case err := <-errors:
 			if Debug {
@@ -305,11 +312,14 @@ func (system *System) Start(finish <-chan bool) {
 		case <-finish:
 			i := 0
 			for _, trader := range system.Traders {
-				dones[i] <- true
 				trader.Data.Ticker.Stop()
+				dones[i] <- true
 				i++
 			}
-			finished = true
+
+			log.Println("Waiting for traders to finish...")
+			time.Sleep(time.Second)
+			return
 		}
 	}
 }

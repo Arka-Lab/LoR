@@ -13,7 +13,7 @@ func main() {
 	finish := make(chan bool, 1)
 	system := internal.NewSystem()
 	numTypes, runTime := 3, 90*time.Second
-	numTraders, numRandoms, numBads := 100, 0, 0
+	numTraders, numRandoms, numBads := 100, 10, 10
 
 	logger.Printf("Starting simulation with %d types (BadBehavior percentage = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
 	system.Init(numTraders, numRandoms, numBads, uint(numTypes))

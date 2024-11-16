@@ -15,7 +15,7 @@ const (
 	FractalMax      = 200
 	VerificationMin = 20
 	VerificationMax = 50
-	FractalPrize    = 1
+	FractalPrize    = 5
 )
 
 type FractalRing struct {
