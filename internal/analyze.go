@@ -68,7 +68,9 @@ func AnalyzeSystem(system *System) {
 					count++
 				}
 			}
-			tradersTotal += total / count
+			if count > 0 {
+				tradersTotal += total / count
+			}
 		}
 		fmt.Printf("Average satisfaction per trader: %.2f%%\n", float64(tradersTotal)/float64(len(traderSatisfaction))*100)
 	}
