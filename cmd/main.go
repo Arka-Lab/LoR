@@ -8,12 +8,14 @@ import (
 	"github.com/Arka-Lab/LoR/pkg"
 )
 
+// TODO: Note that the number of traders are independent of the results and we used small numbers cause of resource limitations.
+
 func main() {
 	logger := log.Default()
 	finish := make(chan bool, 1)
 	system := internal.NewSystem()
 	numTypes, runTime := 3, 90*time.Second
-	numTraders, numRandoms, numBads := 100, 10, 10
+	numTraders, numRandoms, numBads := 100, 20, 20
 
 	logger.Printf("Starting simulation with %d types (BadBehavior percentage = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
 	system.Init(numTraders, numRandoms, numBads, uint(numTypes))

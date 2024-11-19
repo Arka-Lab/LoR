@@ -24,6 +24,7 @@ type CooperationTable struct {
 	UnusedCoins [][]string `json:"-"`
 	FractalID   string     `json:"-"`
 	IsValid     bool       `json:"-"`
+	Rounds      int        `json:"-"`
 }
 
 func (t *Trader) checkForCooperationRing() *CooperationTable {
@@ -65,6 +66,7 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 		CoinIDs:     selectedCoins,
 		UnusedCoins: unusedCoins,
 		IsValid:     isValid,
+		Rounds:      -1,
 	}
 }
 

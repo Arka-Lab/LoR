@@ -20,7 +20,6 @@ const (
 
 type FractalRing struct {
 	ID               string             `json:"id"`
-	Rounds           int                `json:"rounds"`
 	CooperationRings []CooperationTable `json:"cooperation_rings"`
 	VerificationTeam []string           `json:"verification_team"`
 	SoloRings        []string           `json:"-"`
@@ -45,7 +44,6 @@ func (t *Trader) checkForFractalRing() *FractalRing {
 	selectedCooperations := t.updateCooperations(selectedRing, fractalID, &isValid)
 
 	return &FractalRing{
-		Rounds:           0,
 		IsValid:          isValid,
 		ID:               fractalID,
 		CooperationRings: selectedCooperations,
