@@ -3,6 +3,9 @@
 rm -rf results
 mkdir -p results
 
+trap "exit" INT
+trap "kill 0" EXIT
+
 num_types=3
 num_traders=500
 run_time=$((1*60))
