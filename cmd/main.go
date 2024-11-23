@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"time"
 
@@ -8,14 +9,27 @@ import (
 	"github.com/Arka-Lab/LoR/pkg"
 )
 
-// TODO: Note that the number of traders are independent of the results and we used small numbers cause of resource limitations.
+func ParseFlags() (int, time.Duration, int, int, int) {
+	typesPtr := flag.Int("type", 3, "number of coin types")
+	runTimePtr := flag.Int("time", 90, "run time in seconds")
+	tradersPtr := flag.Int("trader", 100, "number of traders")
+	randomsPtr := flag.Int("random", 30, "number of random traders")
+	badsPtr := flag.Int("bad", 30, "number of bad traders")
+	flag.Parse()
+
+	numTypes, numTraders := *typesPtr, *tradersPtr
+	runTime := time.Duration(*runTimePtr) * time.Second
+	numRandoms, numBads := *randomsPtr, *badsPtr
+
+	return numTypes, runTime, numTraders, numRandoms, numBads
+}
 
 func main() {
 	logger := log.Default()
 	finish := make(chan bool, 1)
 	system := internal.NewSystem()
-	numTypes, runTime := 3, 90*time.Second
-	numTraders, numRandoms, numBads := 100, 20, 20
+
+	numTypes, runTime, numTraders, numRandoms, numBads := ParseFlags()
 
 	logger.Printf("Starting simulation with %d types (BadBehavior percentage = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
 	system.Init(numTraders, numRandoms, numBads, uint(numTypes))
