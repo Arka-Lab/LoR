@@ -8,7 +8,7 @@ trap "kill 0" EXIT
 
 num_types=3
 num_traders=500
-run_time=$((2*60))
+run_time=$((10*60))
 
 function run {
     num_random=$(($num_traders*$1/100))
