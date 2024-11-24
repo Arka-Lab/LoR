@@ -11,10 +11,10 @@ import (
 
 func ParseFlags() (int, time.Duration, int, int, int) {
 	typesPtr := flag.Int("type", 3, "number of coin types")
-	runTimePtr := flag.Int("time", 90, "run time in seconds")
+	runTimePtr := flag.Int("time", 60, "run time in seconds")
 	tradersPtr := flag.Int("trader", 100, "number of traders")
-	randomsPtr := flag.Int("random", 30, "number of random traders")
-	badsPtr := flag.Int("bad", 30, "number of bad traders")
+	randomsPtr := flag.Int("random", 0, "number of random traders")
+	badsPtr := flag.Int("bad", 0, "number of bad traders")
 	flag.Parse()
 
 	numTypes, numTraders := *typesPtr, *tradersPtr
