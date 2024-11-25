@@ -32,3 +32,11 @@ do
 done
 
 wait
+
+rm -rf output
+mkdir -p output
+cp results/*.result output/
+zip -r output.zip output
+rm -rf output
+
+echo "All runs finished."
