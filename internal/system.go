@@ -329,7 +329,7 @@ func (system *System) Start(finish <-chan bool) {
 			}
 
 			log.Println("Waiting for traders to finish...")
-			time.Sleep(3 * time.Second)
+			time.Sleep(10 * time.Second)
 			return
 		}
 	}
