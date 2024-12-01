@@ -73,5 +73,42 @@ func AnalyzeSystem(system *System) {
 			}
 		}
 		fmt.Printf("Average satisfaction per trader: %.2f%%\n", float64(tradersTotal)/float64(len(traderSatisfaction))*100)
+
+		tradersAjacency := make(map[string]int)
+		tradersUsedCoins := make(map[string]int)
+		for _, fractal := range system.Fractals {
+			ajacencies := make(map[string]map[string]bool)
+			for _, ring := range fractal.CooperationRings {
+				for _, coinID := range ring.CoinIDs {
+					owner := system.Coins[coinID].Owner
+					if _, ok := ajacencies[owner]; !ok {
+						ajacencies[owner] = make(map[string]bool)
+					}
+					tradersUsedCoins[owner]++
+
+					for _, otherCoinID := range ring.CoinIDs {
+						ajacencies[owner][system.Coins[otherCoinID].Owner] = true
+					}
+					for _, traderID := range fractal.VerificationTeam {
+						ajacencies[owner][traderID] = true
+					}
+				}
+			}
+
+			for owner, ajacency := range ajacencies {
+				tradersAjacency[owner] += len(ajacency) - 1
+			}
+		}
+
+		averageAjacency, maximumAjacency := 0.0, 0.0
+		for traderID, ajacency := range tradersAjacency {
+			currentAjacency := float64(ajacency) / float64(tradersUsedCoins[traderID])
+			if currentAjacency > maximumAjacency {
+				maximumAjacency = currentAjacency
+			}
+			averageAjacency += currentAjacency
+		}
+		fmt.Printf("Average ajacency per trader: %.2f\n", averageAjacency/float64(len(tradersAjacency)))
+		fmt.Printf("Maximum ajacency per trader: %.2f\n", maximumAjacency)
 	}
 }
