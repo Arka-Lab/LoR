@@ -9,6 +9,11 @@ import (
 	"github.com/Arka-Lab/LoR/tools"
 )
 
+const (
+	VerificationMin = 20
+	VerificationMax = 20
+)
+
 func (t *Trader) SubmitRing(ring *FractalRing) error {
 	if err := t.validateFractalRing(ring); err != nil {
 		validErrors := []string{"invalid selected cooperation ring", "invalid verification team", "invalid cooperation ring coins"}
