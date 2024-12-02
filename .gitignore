@@ -23,3 +23,5 @@ go.work.sum
 
 # other files
 results/
+output/
+**/.DS_Store
