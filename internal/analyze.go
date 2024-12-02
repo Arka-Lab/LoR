@@ -26,8 +26,8 @@ func AnalyzeSystem(system *System) {
 			acceptRate += float64(system.AcceptedCount[traderID]) / float64(system.SubmitCount[traderID])
 		}
 	}
-	fmt.Printf("Average number of submitted rings per trader: %.2f\n", float64(totalSubmitted)/float64(numSubmitted))
-	fmt.Printf("Average fractal acceptance rate per trader: %.2f%%\n", acceptRate/float64(numSubmitted)*100)
+	fmt.Printf("Average number of submitted fractal rings per trader: %.2f\n", float64(totalSubmitted)/float64(numSubmitted))
+	fmt.Printf("Average fractal ring acceptance rate per trader: %.2f%%\n", acceptRate/float64(numSubmitted)*100)
 
 	fmt.Println("Number of invalid accepted fractal rings:", system.BadAcceptCount)
 	fmt.Println("Number of valid rejected fractal rings:", system.BadRejectCount)
