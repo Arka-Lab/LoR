@@ -99,11 +99,13 @@ func AnalyzeSystem(system *System) {
 
 		averageAdjacency, maximumAdjacency := 0.0, 0.0
 		for traderID, adjacency := range tradersAdjacency {
-			currentAdjacency := float64(len(adjacency)-1) / float64(tradersUsedCoins[traderID])
-			if currentAdjacency > maximumAdjacency {
-				maximumAdjacency = currentAdjacency
+			if used, ok := tradersUsedCoins[traderID]; ok {
+				currentAdjacency := float64(len(adjacency)-1) / float64(used)
+				if currentAdjacency > maximumAdjacency {
+					maximumAdjacency = currentAdjacency
+				}
+				averageAdjacency += currentAdjacency
 			}
-			averageAdjacency += currentAdjacency
 		}
 		fmt.Printf("Average adjacency per trader: %.2f\n", averageAdjacency/float64(len(tradersAdjacency)))
 		fmt.Printf("Maximum adjacency per trader: %.2f\n", maximumAdjacency)
