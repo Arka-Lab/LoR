@@ -94,7 +94,7 @@ if __name__ == '__main__':
         for j in range(8):
             file_name = f'{i*10}-{j*10}'
             if file_name in raw_data:
-                data[i][j] = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals']
+                data[i][j] = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
     plot_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
 
     # Plot percentage of valid rejected fractal rings
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         for j in range(8):
             file_name = f'{i*10}-{j*10}'
             if file_name in raw_data:
-                data[i][j] = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals']
+                data[i][j] = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
     plot_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
 
     # Average adjacency per trader
