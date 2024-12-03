@@ -1,7 +1,7 @@
 #!/bin/sh
 
-rm -rf results
-mkdir -p results
+rm -rf result
+mkdir -p result
 
 trap "exit" INT
 trap "kill 0" EXIT
