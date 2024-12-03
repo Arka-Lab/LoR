@@ -23,8 +23,9 @@ def plot_data(data, title, z_label):
 
     # Define the colormap
     gradient_values = x_pos + y_pos
-    normalized_values = (gradient_values - gradient_values.min()) / (gradient_values.max() - gradient_values.min())
-    colors = cm.coolwarm(normalized_values)
+    gradient_values -= gradient_values.min()
+    gradient_values = gradient_values / gradient_values.max()
+    colors = cm.coolwarm(gradient_values)
 
     # Create the figure and 3D axis
     fig = plt.figure(figsize=(10, 7))
