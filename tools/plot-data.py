@@ -67,7 +67,7 @@ def load_data(dir_path):
                 result['coin_satisfaction'] = float(lines[7].split(': ')[1].replace('%', ''))
                 result['trader_satisfaction'] = float(lines[8].split(': ')[1].replace('%', ''))
                 result['average_adjacency'] = float(lines[9].split(': ')[1])
-                result['max_adjacency'] = float(lines[10].split(': ')[1])
+                result['max_adjacency'] = int(lines[10].split(': ')[1])
             data[file.split('.')[0]] = result
         except:
             print(f'Error reading file {file}')
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             file_name = f'{i*10}-{j*10}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['average_adjacency']
-    plot_data(data, 'Average Number of Communication Channels', 'Number of Communication Channels')
+    plot_data(data, 'Average Number of Communication Complexity', 'Number of Communications')
 
     # Maximum adjacency per trader
     data = np.zeros((8, 8))
@@ -122,7 +122,7 @@ if __name__ == '__main__':
             file_name = f'{i*10}-{j*10}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['max_adjacency']
-    plot_data(data, 'Maximum Number of Communication Channels', 'Number of Communication Channels')
+    plot_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications')
 
     # Average fractal ring acceptance rate per trader
     data = np.zeros((8, 8))
