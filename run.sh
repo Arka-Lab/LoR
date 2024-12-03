@@ -13,9 +13,10 @@ run_time=$((10*60))
 function run {
     num_random=$(($num_traders*$1/100))
     num_bad=$(($num_traders*$2/100))
+    file_name="result/$1-$2.json"
 
     echo "Running with $1% random traders and $2% bad traders..."
-    go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad > results/$1-$2.result 2> results/$1-$2.log
+    go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad -file=$file_name > result/$1-$2.result 2> result/$1-$2.log
     echo "Run with $1% random traders and $2% bad traders finished."
 }
 
@@ -33,9 +34,9 @@ done
 
 wait
 
-rm -rf output
+rm -rf output output.zip
 mkdir -p output
-cp results/*.result output/
+cp result/*.result output/
 zip -r output.zip output
 rm -rf output
 
