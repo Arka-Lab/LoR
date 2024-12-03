@@ -1,9 +1,11 @@
 package internal
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"math/rand"
+	"os"
 	"sync"
 	"syscall"
 	"time"
@@ -333,4 +335,45 @@ func (system *System) Start(finish <-chan bool) {
 			return
 		}
 	}
+}
+
+func (system *System) Save(filePath string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	data, err := json.Marshal(system)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(data)
+	return err
+}
+
+func Load(filePath string) (*System, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	fileStatus, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]byte, fileStatus.Size())
+	n, err := file.Read(data)
+	if err != nil {
+		return nil, err
+	}
+
+	system := NewSystem()
+	if err := json.Unmarshal(data[:n], system); err != nil {
+		return nil, err
+	}
+	return system, nil
 }

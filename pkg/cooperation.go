@@ -15,16 +15,17 @@ const (
 )
 
 type CooperationTable struct {
-	ID          string     `json:"id"`
-	Weight      float64    `json:"weight"`
-	Next        string     `json:"next"`
-	Prev        string     `json:"prev"`
-	Investor    string     `json:"investor"`
-	CoinIDs     []string   `json:"-"`
+	ID       string  `json:"id"`
+	Weight   float64 `json:"weight"`
+	Next     string  `json:"next"`
+	Prev     string  `json:"prev"`
+	Investor string  `json:"investor"`
+
 	UnusedCoins [][]string `json:"-"`
-	FractalID   string     `json:"-"`
-	IsValid     bool       `json:"-"`
-	Rounds      int        `json:"-"`
+	CoinIDs     []string
+	FractalID   string
+	IsValid     bool
+	Rounds      int
 }
 
 func (t *Trader) checkForCooperationRing() *CooperationTable {

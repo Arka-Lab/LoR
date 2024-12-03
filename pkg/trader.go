@@ -37,7 +37,8 @@ type Trader struct {
 	Account   float64        `json:"account"`
 	Wallet    string         `json:"wallet"`
 	PublicKey *rsa.PublicKey `json:"public_key"`
-	Data      *TraderData    `json:"-"`
+
+	Data *TraderData `json:"-"`
 }
 
 func CreateTrader(traderType BehaviorType, account float64, wallet string, coinTypeCount uint) *Trader {

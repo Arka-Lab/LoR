@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	VerificationMin = 20
-	VerificationMax = 20
+	VerificationMin = 21
+	VerificationMax = 21
 )
 
 func (t *Trader) SubmitRing(ring *FractalRing) error {

@@ -17,14 +17,15 @@ const (
 )
 
 type CoinTable struct {
-	ID            string  `json:"id"`
-	Amount        float64 `json:"amount"`
-	Status        Status  `json:"status"`
-	Type          uint    `json:"type"`
-	Next          string  `json:"next"`
-	Prev          string  `json:"prev"`
-	Owner         string  `json:"owner"`
-	CooperationID string  `json:"-"`
+	ID     string  `json:"id"`
+	Amount float64 `json:"amount"`
+	Status Status  `json:"status"`
+	Type   uint    `json:"type"`
+	Next   string  `json:"next"`
+	Prev   string  `json:"prev"`
+	Owner  string  `json:"owner"`
+
+	CooperationID string
 }
 
 func (t *Trader) CreateCoin(amount float64, coinType uint) *CoinTable {
