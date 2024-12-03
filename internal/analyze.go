@@ -74,18 +74,14 @@ func AnalyzeSystem(system *System) {
 		}
 		fmt.Printf("Average satisfaction per trader: %.2f%%\n", float64(tradersTotal)/float64(len(traderSatisfaction))*100)
 
-		tradersUsedCoins := make(map[string]int)
 		tradersAdjacency := make(map[string]map[string]bool)
 		for _, trader := range system.Traders {
 			tradersAdjacency[trader.ID] = make(map[string]bool)
 		}
-
 		for _, fractal := range system.Fractals {
 			for _, ring := range fractal.CooperationRings {
 				for _, coinID := range ring.CoinIDs {
 					owner := system.Coins[coinID].Owner
-					tradersUsedCoins[owner]++
-
 					for _, traderID := range fractal.VerificationTeam {
 						tradersAdjacency[owner][traderID] = true
 						tradersAdjacency[traderID][owner] = true
@@ -97,17 +93,19 @@ func AnalyzeSystem(system *System) {
 			}
 		}
 
-		averageAdjacency, maximumAdjacency := 0.0, 0.0
-		for traderID, adjacency := range tradersAdjacency {
-			if used, ok := tradersUsedCoins[traderID]; ok {
-				currentAdjacency := float64(len(adjacency)-1) / float64(used)
+		tradersCount := 0
+		totalAdjacency, maximumAdjacency := 0, 0
+		for _, adjacency := range tradersAdjacency {
+			if len(adjacency) > 0 {
+				tradersCount++
+				currentAdjacency := len(adjacency) - 1
 				if currentAdjacency > maximumAdjacency {
 					maximumAdjacency = currentAdjacency
 				}
-				averageAdjacency += currentAdjacency
+				totalAdjacency += currentAdjacency
 			}
 		}
-		fmt.Printf("Average adjacency per trader: %.2f\n", averageAdjacency/float64(len(tradersAdjacency)))
-		fmt.Printf("Maximum adjacency per trader: %.2f\n", maximumAdjacency)
+		fmt.Printf("Average adjacency per trader: %.2f\n", float64(totalAdjacency)/float64(tradersCount))
+		fmt.Printf("Maximum adjacency per trader: %d\n", maximumAdjacency)
 	}
 }
