@@ -1,7 +1,10 @@
 #!/bin/sh
 
-rm -rf result
-mkdir -p result
+if [ "$1" == "cleanup" ]
+then
+    rm -rf result
+    mkdir -p result
+fi
 
 trap "exit" INT
 trap "kill 0" EXIT
@@ -20,7 +23,7 @@ function run {
     file_name="result/$1-$2.json"
 
     log "Running with $1% random traders and $2% bad traders..."
-    go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad -file=$file_name > result/$1-$2.result 2> result/$1-$2.log
+    go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad -save-to=$file_name > result/$1-$2.result 2> result/$1-$2.log
     log "Run with $1% random traders and $2% bad traders finished."
 }
 
@@ -38,10 +41,8 @@ done
 
 wait
 
-rm -rf output output.zip
-mkdir -p output
+rm -rf output output.zip && mkdir -p output
 cp result/*.result output/
-zip -r output.zip output
-rm -rf output
+zip -r output.zip output && rm -rf output
 
 log "All runs finished!"
