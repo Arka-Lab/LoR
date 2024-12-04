@@ -22,7 +22,7 @@ def plot_data(data, title, z_label):
     dz = data.flatten()
 
     # Define the colormap
-    gradient_values = x_pos + y_pos
+    gradient_values = x_pos / 10 + y_pos
     gradient_values -= gradient_values.min()
     gradient_values = gradient_values / gradient_values.max()
     colors = cm.coolwarm(gradient_values)
@@ -52,25 +52,26 @@ def plot_data(data, title, z_label):
 def load_data(dir_path):
     data = {}
     files = os.listdir(dir_path)
-    for file in files:
-        result = {}
-        try:
-            with open(os.path.join(dir_path, file), 'r') as f:
-                lines = f.readlines()
-                result['coins'] = int(lines[0].split(': ')[1])
-                result['fractals'] = int(lines[1].split(': ')[1])
-                result['run_coins'] = float(lines[2].split(': ')[1].replace('%', ''))
-                result['submit_fractal'] = float(lines[3].split(': ')[1])
-                result['accept_fractal'] = float(lines[4].split(': ')[1].replace('%', ''))
-                result['invalid_accept_fractal'] = int(lines[5].split(': ')[1])
-                result['valid_reject_fractal'] = int(lines[6].split(': ')[1])
-                result['coin_satisfaction'] = float(lines[7].split(': ')[1].replace('%', ''))
-                result['trader_satisfaction'] = float(lines[8].split(': ')[1].replace('%', ''))
-                result['average_adjacency'] = float(lines[9].split(': ')[1])
-                result['max_adjacency'] = int(lines[10].split(': ')[1])
-            data[file.split('.')[0]] = result
-        except:
-            print(f'Error reading file {file}')
+    for file_name in files:
+        if file_name.endswith('.result'):
+            result = {}
+            try:
+                with open(os.path.join(dir_path, file_name), 'r') as f:
+                    lines = f.readlines()
+                    result['coins'] = int(lines[0].split(': ')[1])
+                    result['fractals'] = int(lines[1].split(': ')[1])
+                    result['run_coins'] = float(lines[2].split(': ')[1].replace('%', ''))
+                    result['submit_fractal'] = float(lines[3].split(': ')[1])
+                    result['accept_fractal'] = float(lines[4].split(': ')[1].replace('%', ''))
+                    result['invalid_accept_fractal'] = int(lines[5].split(': ')[1])
+                    result['valid_reject_fractal'] = int(lines[6].split(': ')[1])
+                    result['coin_satisfaction'] = float(lines[7].split(': ')[1].replace('%', ''))
+                    result['trader_satisfaction'] = float(lines[8].split(': ')[1].replace('%', ''))
+                    result['average_adjacency'] = float(lines[9].split(': ')[1])
+                    result['max_adjacency'] = int(lines[10].split(': ')[1])
+                data[file_name.split('.')[0]] = result
+            except:
+                print(f'Error reading file {file_name}')
     return data
 
 if __name__ == '__main__':
