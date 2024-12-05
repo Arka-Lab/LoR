@@ -20,21 +20,27 @@ function log {
 function run {
     num_random=$(($num_traders*$1/100))
     num_bad=$(($num_traders*$2/100))
-    file_name="result/$1-$2.json"
+    
+    result_file="result/$1-$2.result"
+    json_file="result/$1-$2.json"
+    log_file="result/$1-$2.log"
 
-    log "Running with $1% random traders and $2% bad traders..."
-    go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad -save-to=$file_name > result/$1-$2.result 2> result/$1-$2.log
-    log "Run with $1% random traders and $2% bad traders finished."
+    if [ -f $json_file ]
+    then
+        log "Loading from $json_file..."
+        go run cmd/main.go -load-from=$json_file > $result_file 2> $log_file
+        log "Loaded from $json_file."
+    else
+        log "Running with $1% random traders and $2% bad traders..."
+        go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -bad=$num_bad -save-to=$json_file > $result_file 2> $log_file
+        log "Run with $1% random traders and $2% bad traders finished."
+    fi
 }
 
-for i in $(seq 0 10 100)
+for i in $(seq 0 5 70)
 do
-    for j in $(seq 0 10 100)
+    for j in $(seq 0 5 70)
     do
-        if [ $(($i+$j)) -gt 70 ]
-        then
-            continue
-        fi
         run $i $j
     done
 done

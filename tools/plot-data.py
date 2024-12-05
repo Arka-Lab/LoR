@@ -6,19 +6,19 @@ import matplotlib.pyplot as plt
 
 def plot_data(data, title, z_label):
     # Define the percentages
-    random_behavior_percentages = np.arange(0, 80, 10)
-    bad_behavior_percentages = np.arange(0, 80, 10)
+    random_behavior_percentages = np.arange(0, 75, 5)
+    bad_behavior_percentages = np.arange(0, 75, 5)
 
     # Create a meshgrid for the 3D plot
     X, Y = np.meshgrid(random_behavior_percentages, bad_behavior_percentages)
 
     # Flatten the grid to use with bar3d
-    x_pos = X.flatten()
+    x_pos = X.flatten()                                                                   
     y_pos = Y.flatten()
     z_pos = np.zeros_like(x_pos)  # All bars start at z=0
 
     # Bar dimensions
-    dx = dy = 10  # Each bar will represent 10% intervals
+    dx = dy = 5  # Each bar will represent 5% intervals
     dz = data.flatten()
 
     # Define the colormap
@@ -81,73 +81,73 @@ if __name__ == '__main__':
     raw_data = load_data(file_path)
 
     # Plot the percentage of run coins
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['run_coins']
     plot_data(data, 'Percentage of Run Coins', 'Run Coins (%)')
 
     # Plot percentage of invalid accepted fractal rings
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
     plot_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
 
     # Plot percentage of valid rejected fractal rings
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
     plot_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
 
     # Average adjacency per trader
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['average_adjacency']
     plot_data(data, 'Average Number of Communication Complexity', 'Number of Communications')
 
     # Maximum adjacency per trader
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['max_adjacency']
     plot_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications')
 
     # Average fractal ring acceptance rate per trader
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['accept_fractal']
     plot_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)')
 
     # Average satisfaction per coin
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['coin_satisfaction']
     plot_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
 
     # Average satisfaction per trader
-    data = np.zeros((8, 8))
-    for i in range(8):
-        for j in range(8):
-            file_name = f'{i*10}-{j*10}'
+    data = np.zeros((15, 15))
+    for i in range(15):
+        for j in range(15):
+            file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
                 data[i][j] = raw_data[file_name]['trader_satisfaction']
     plot_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
