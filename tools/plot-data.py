@@ -19,7 +19,7 @@ def plot_data(data, title, z_label):
 
     # Bar dimensions
     dx = dy = 5  # Each bar will represent 5% intervals
-    dz = data.flatten()
+    dz = np.transpose(data).flatten()
 
     # Define the colormap
     gradient_values = x_pos / 10 + y_pos
