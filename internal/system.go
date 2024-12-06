@@ -262,6 +262,10 @@ func (system *System) CreateRandomCoins(trader *pkg.Trader, done <-chan bool, er
 }
 
 func (system *System) Init(numTraders, numRandomVoters, numBadVoters int, coinTypeCount uint) error {
+	if numRandomVoters+numRandomVoters > numTraders {
+		return errors.New("number of random and bad voters should be less than number of traders")
+	}
+
 	ch := make(chan bool)
 	for i := 0; i < numTraders; i++ {
 		go func() {
