@@ -37,9 +37,9 @@ function run {
     fi
 }
 
-for i in $(seq 0 5 70)
+for i in $(seq 0 5 100)
 do
-    for j in $(seq 0 5 70)
+    for j in $(seq 0 5 $((100-i)))
     do
         run $i $j
     done
@@ -50,5 +50,11 @@ wait
 rm -rf output output.zip && mkdir -p output
 cp result/*.result output/
 zip -r output.zip output && rm -rf output
+log "Output saved to output.zip."
+
+rm -rf backup backup.zip && mkdir -p backup
+cp result/*.json backup/
+zip -r backup.zip backup && rm -rf backup
+log "Backup saved to backup.zip."
 
 log "All runs finished!"
