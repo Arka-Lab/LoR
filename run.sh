@@ -1,6 +1,20 @@
 #!/bin/sh
+# Usage: ./run.sh [cleanup] [save]
 
-if [ "$1" == "cleanup" ]
+save=false
+cleanup=false
+for arg in "$@"
+do
+    if [ "$arg" == "cleanup" ]
+    then
+        cleanup=true
+    elif [ "$arg" == "save" ]
+    then
+        save=true
+    fi
+done
+
+if [ $cleanup == true ]
 then
     rm -rf result
     mkdir -p result
@@ -47,14 +61,17 @@ done
 
 wait
 
-rm -rf output output.zip && mkdir -p output
-cp result/*.result output/
-zip -r output.zip output && rm -rf output
-log "Output saved to output.zip."
+if [ $save == true ]
+then
+    rm -rf output output.zip && mkdir -p output
+    cp result/*.result output/
+    zip -r output.zip output && rm -rf output
+    log "Output saved to output.zip."
 
-rm -rf backup backup.zip && mkdir -p backup
-cp result/*.json backup/
-zip -r backup.zip backup && rm -rf backup
-log "Backup saved to backup.zip."
+    rm -rf backup backup.zip && mkdir -p backup
+    cp result/*.json backup/
+    zip -r backup.zip backup && rm -rf backup
+    log "Backup saved to backup.zip."
+fi
 
 log "All runs finished!"
