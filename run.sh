@@ -51,7 +51,7 @@ function run {
     fi
 }
 
-for i in $(seq 0 5 100)
+for i in $(seq 0 5 70)
 do
     for j in $(seq 0 5 $((100-i)))
     do

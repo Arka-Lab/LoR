@@ -29,7 +29,7 @@ def plot_3d_data(data, title, z_label):
 
     # Define the colormap and set the colors
     colors = cm.coolwarm(gradient_values)
-    colors[np.where(x_pos + y_pos > 100)] = 0
+    colors[np.where(x_pos + y_pos > 100)] = colors[np.where(x_pos > 70)] = 0
 
     # Create the figure and 3D axis
     fig = plt.figure(figsize=(10, 7))
