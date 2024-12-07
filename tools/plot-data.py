@@ -121,8 +121,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['run_coins']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['run_coins'])
+                value = raw_data[file_name]['run_coins']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Run Coins', 'Run Coins (%)')
     plot_2d_data(data, 'Percentage of Run Coins', 'Run Coins (%)')
 
@@ -132,8 +132,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100)
+                value = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
     plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
 
@@ -143,8 +143,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100)
+                value = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
     plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
 
@@ -154,8 +154,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['average_adjacency']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['average_adjacency'])
+                value = raw_data[file_name]['average_adjacency']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications')
     plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications')
 
@@ -165,8 +165,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['max_adjacency']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['max_adjacency'])
+                value = raw_data[file_name]['max_adjacency']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications')
     plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications')
 
@@ -176,8 +176,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['accept_fractal']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['accept_fractal'])
+                value = raw_data[file_name]['accept_fractal']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)')
     plot_2d_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)')
 
@@ -187,8 +187,8 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['coin_satisfaction']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['coin_satisfaction'])
+                value = raw_data[file_name]['coin_satisfaction']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
     plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
 
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                data_2d[i][j] = raw_data[file_name]['trader_satisfaction']
-                data[i / 2 + j * 5] = np.append(data[i + 2 * j], raw_data[file_name]['trader_satisfaction'])
+                value = raw_data[file_name]['trader_satisfaction']
+                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
     plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
