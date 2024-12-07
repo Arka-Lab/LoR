@@ -37,7 +37,9 @@ func main() {
 		system = internal.NewSystem()
 
 		logger.Printf("Starting simulation with %d types (alpha = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
-		system.Init(numTraders, numRandoms, numBads, uint(numTypes))
+		if err := system.Init(numTraders, numRandoms, numBads, uint(numTypes)); err != nil {
+			logger.Fatalf("Error initializing system: %v\n", err)
+		}
 		logger.Println("Simulation initialized!")
 
 		logger.Println("Starting simulation...")
