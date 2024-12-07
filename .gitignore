@@ -25,4 +25,5 @@ go.work.sum
 result/
 output/
 output.zip
+backup.zip
 **/.DS_Store
