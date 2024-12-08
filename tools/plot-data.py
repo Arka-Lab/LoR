@@ -14,7 +14,7 @@ def plot_3d_data(data, title, z_label):
     X, Y = np.meshgrid(random_behavior_percentages, bad_behavior_percentages)
 
     # Flatten the grid to use with bar3d
-    x_pos = X.flatten()                                                                   
+    x_pos = X.flatten()
     y_pos = Y.flatten()
     z_pos = np.zeros_like(x_pos)  # All bars start at z=0
 
