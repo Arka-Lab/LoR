@@ -6,12 +6,8 @@ from typing import DefaultDict
 import matplotlib.pyplot as plt
 
 def plot_3d_data(data, title, z_label):
-    # Define the percentages
-    random_behavior_percentages = np.arange(0, 105, 5)
-    bad_behavior_percentages = np.arange(0, 105, 5)
-
     # Create a meshgrid for the 3D plot
-    X, Y = np.meshgrid(random_behavior_percentages, bad_behavior_percentages)
+    X, Y = np.meshgrid(np.arange(0, 105, 5), np.arange(0, 105, 5))
 
     # Flatten the grid to use with bar3d
     x_pos = X.flatten()
@@ -44,8 +40,8 @@ def plot_3d_data(data, title, z_label):
     ax.set_zlabel(z_label)
 
     # Set ticks for better readability
-    ax.set_xticks(random_behavior_percentages)
-    ax.set_yticks(bad_behavior_percentages)
+    ax.set_xticks(np.arange(0, 105, 10))
+    ax.set_yticks(np.arange(0, 105, 10))
 
     # Set title
     ax.set_title(title)
