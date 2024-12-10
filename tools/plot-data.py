@@ -117,7 +117,7 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                value = raw_data[file_name]['run_coins'] / raw_data[file_name]['coins']
+                value = raw_data[file_name]['run_coins'] / raw_data[file_name]['coins'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Run Coins', 'Run Coins (%)')
     plot_2d_data(data, 'Percentage of Run Coins', 'Run Coins (%)')
