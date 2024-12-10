@@ -62,7 +62,7 @@ func (t *Trader) getSoloRings() []string {
 }
 
 func (t *Trader) getSelectedRing(soloRings []string, isValid *bool) []string {
-	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float64() < BadBehavior) {
 		*isValid = false
 		return selectRandomFractal(soloRings)
 	}
@@ -71,7 +71,7 @@ func (t *Trader) getSelectedRing(soloRings []string, isValid *bool) []string {
 
 func (t *Trader) getVerificationTeam(selectedRing []string, isValid *bool) []string {
 	traders := maps.Keys(t.Data.Traders)
-	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float64() < BadBehavior) {
 		*isValid = false
 		return selectRandomVerification(traders)
 	}
@@ -119,8 +119,12 @@ func selectRandomFractal(soloRings []string) (result []string) {
 		return nil
 	}
 
-	randomIndices := tools.RandomIndexes(len(soloRings), rand.Intn(min(FractalMax, len(soloRings))-FractalMin+1)+FractalMin)
-	for _, index := range randomIndices {
+	k := FractalMin + tools.SHA256Int(soloRings)%(FractalMax-FractalMin+1)
+	if len(soloRings) < k {
+		return nil
+	}
+
+	for _, index := range tools.RandomIndexes(len(soloRings), k) {
 		result = append(result, soloRings[index])
 	}
 	return
@@ -131,15 +135,15 @@ func selectFractalRing(soloRings []string, firstRing string) (result []string) {
 		return nil
 	}
 
-	copiedRings := make([]string, len(soloRings))
-	copy(copiedRings, soloRings)
-	slices.Sort(copiedRings)
-
-	k := FractalMin + tools.SHA256Int(copiedRings)%(FractalMax-FractalMin+1)
+	k := FractalMin + tools.SHA256Int(soloRings)%(FractalMax-FractalMin+1)
 	if len(soloRings) < k {
 		return nil
 	}
 	result = make([]string, k)
+
+	copiedRings := make([]string, len(soloRings))
+	copy(copiedRings, soloRings)
+	slices.Sort(copiedRings)
 
 	if firstRing != "" {
 		result[0] = firstRing

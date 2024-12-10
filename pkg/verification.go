@@ -21,7 +21,7 @@ func (t *Trader) SubmitRing(ring *FractalRing) error {
 			return err
 		}
 
-		if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+		if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float64() < BadBehavior) {
 			return nil
 		}
 		return err
@@ -30,7 +30,7 @@ func (t *Trader) SubmitRing(ring *FractalRing) error {
 }
 
 func (t *Trader) Vote() error {
-	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
+	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float64() < BadBehavior) {
 		return errors.New("bad behavior")
 	}
 	return nil

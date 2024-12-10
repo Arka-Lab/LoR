@@ -15,14 +15,36 @@ func ParseFlags() (int, time.Duration, int, int, int, string, string) {
 	tradersPtr := flag.Int("trader", 100, "number of traders")
 	randomsPtr := flag.Int("random", 0, "number of random traders")
 	badsPtr := flag.Int("bad", 0, "number of bad traders")
+	alphaPtr := flag.Float64("alpha", pkg.BadBehavior, "bad behavior percentage")
 	saveTohPtr := flag.String("save-to", "system.json", "file path to save system")
 	loadFromhPtr := flag.String("load-from", "", "file path to load system")
 	flag.Parse()
 
+	if *typesPtr < 1 {
+		log.Fatalf("Number of types must be positive\n")
+	} else if *tradersPtr < 1 {
+		log.Fatalf("Number of traders must be positive\n")
+	}
 	numTypes, numTraders := *typesPtr, *tradersPtr
+
+	if *runTimePtr < 0 {
+		log.Fatalf("Run time must be non-negative\n")
+	}
 	runTime := time.Duration(*runTimePtr) * time.Second
+
+	if *randomsPtr < 0 || *badsPtr < 0 {
+		log.Fatalf("Number of random and bad traders must be non-negative\n")
+	} else if *randomsPtr+*badsPtr > numTraders {
+		log.Fatalf("Number of random and bad traders must be less than the total number of traders\n")
+	}
 	numRandoms, numBads := *randomsPtr, *badsPtr
+
 	saveTo, loadFrom := *saveTohPtr, *loadFromhPtr
+
+	if *alphaPtr < 0 || *alphaPtr > 1 {
+		log.Fatalf("Bad behavior percentage must be between 0 and 1\n")
+	}
+	pkg.BadBehavior = *alphaPtr
 
 	return numTypes, runTime, numTraders, numRandoms, numBads, saveTo, loadFrom
 }

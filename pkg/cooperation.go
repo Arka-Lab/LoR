@@ -44,12 +44,7 @@ func (t *Trader) checkForCooperationRing() *CooperationTable {
 
 	isValid := true
 	var selectedCoins []string
-	if t.Data.TraderType == BadVote || (t.Data.TraderType == RandomVote && rand.Float32() < BadBehavior) {
-		selectedCoins = selectRandomCooperation(unusedCoins)
-		isValid = false
-	} else {
-		selectedCoins = selectCooperationRing(unusedCoins, "")
-	}
+	selectedCoins = selectCooperationRing(unusedCoins, "")
 
 	cooperationID := tools.SHA256Str(selectedCoins)
 	for i, coinID := range selectedCoins {

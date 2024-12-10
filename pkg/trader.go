@@ -10,7 +10,10 @@ import (
 )
 
 const (
-	KeySize     = 2048
+	KeySize = 2048
+)
+
+var (
 	BadBehavior = 0.1
 )
 
