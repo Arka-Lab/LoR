@@ -16,7 +16,7 @@ func AnalyzeSystem(system *System) {
 			runCoins++
 		}
 	}
-	fmt.Printf("Percentage of run coins: %.2f%%\n", float64(runCoins)/float64(len(system.Coins))*100)
+	fmt.Println("Number of run coins:", runCoins)
 
 	numSubmitted, totalSubmitted, acceptRate := 0, 0, 0.0
 	for traderID := range system.Traders {
@@ -111,6 +111,6 @@ func AnalyzeSystem(system *System) {
 			}
 		}
 		fmt.Printf("Average adjacency per trader: %.2f\n", float64(totalAdjacency)/float64(tradersCount))
-		fmt.Printf("Maximum adjacency per trader: %d\n", maximumAdjacency)
+		fmt.Println("Maximum adjacency per trader:", maximumAdjacency)
 	}
 }
