@@ -82,7 +82,7 @@ def load_data(dir_path):
                     lines = f.readlines()
                     result['coins'] = int(lines[0].split(': ')[1])
                     result['fractals'] = int(lines[1].split(': ')[1])
-                    result['run_coins'] = float(lines[2].split(': ')[1].replace('%', ''))
+                    result['run_coins'] = int(lines[2].split(': ')[1])
                     result['submit_fractal'] = float(lines[3].split(': ')[1])
                     result['accept_fractal'] = float(lines[4].split(': ')[1].replace('%', ''))
                     result['invalid_accept_fractal'] = int(lines[5].split(': ')[1])
@@ -117,7 +117,7 @@ if __name__ == '__main__':
         for j in range(21):
             file_name = f'{i*5}-{j*5}'
             if file_name in raw_data:
-                value = raw_data[file_name]['run_coins']
+                value = raw_data[file_name]['run_coins'] / raw_data[file_name]['coins']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Run Coins', 'Run Coins (%)')
     plot_2d_data(data, 'Percentage of Run Coins', 'Run Coins (%)')
