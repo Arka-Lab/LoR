@@ -49,10 +49,15 @@ def plot_3d_data(data, title, z_label):
     # Show the plot
     plt.show()
 
-def plot_2d_data(data, title, y_label):
+def plot_2d_data(data, title, y_label, fit_degree=3):
     # Process the data and find different alpha percentages
     alpha_percentages = np.sort([alpha for alpha in data.keys() if len(data[alpha]) > 0])
     data = [np.mean(data[alpha]) for alpha in alpha_percentages]
+
+    # Fit a polynomial to the data
+    z = np.polyfit(alpha_percentages, data, fit_degree)
+    p = np.poly1d(z)
+    fitted_data = p(alpha_percentages)
 
     # Create the figure and axis
     fig = plt.figure(figsize=(10, 7))
@@ -60,6 +65,9 @@ def plot_2d_data(data, title, y_label):
 
     # Plot the data
     ax.plot(alpha_percentages, data)
+
+    # Plot the fitted data
+    ax.plot(alpha_percentages, fitted_data, '--')
 
     # Set axis labels
     ax.set_xlabel('Alpha (%)')
@@ -93,10 +101,6 @@ def load_data(dir_path):
                     result['max_adjacency'] = int(lines[10].split(': ')[1])
 
                 data[file_name.split('.')[0]] = result
-                if result['valid_reject_fractal'] > 2:
-                    print(file_name, 'has huge amount of valid rejected fractals:', result['valid_reject_fractal'])
-                if result['coins'] < 11000:
-                    print(file_name, 'has small amount of coins:', result['coins'])
             except:
                 print(f'Error reading file {file_name}')
     return data
@@ -131,7 +135,7 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
-    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
+    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 12)
 
     # Plot percentage of valid rejected fractal rings
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -142,7 +146,7 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
-    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
+    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 12)
 
     # Average adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -153,7 +157,7 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['average_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications')
-    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications')
+    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications', 8)
 
     # Maximum adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -186,7 +190,7 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['coin_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
-    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
+    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 12)
 
     # Average satisfaction per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -197,4 +201,4 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['trader_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
-    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
+    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 12)
