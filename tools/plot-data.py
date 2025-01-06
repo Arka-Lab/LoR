@@ -1,9 +1,25 @@
 import os
 import sys
 import numpy as np
+from PIL import Image
 from matplotlib import cm
 from typing import DefaultDict
 import matplotlib.pyplot as plt
+
+def trim_image(file_name):
+    # Load image and convert to numpy array
+    image = Image.open(file_name)
+    image_data = np.asarray(image)
+
+    # Find the non-white pixels
+    non_white = np.where(image_data != 255)
+    x_min, x_max = non_white[0].min(), non_white[0].max() + 1
+    y_min, y_max = non_white[1].min(), non_white[1].max() + 1
+
+    # Crop the image and save it
+    image_data = image_data[x_min:x_max, y_min:y_max]
+    image = Image.fromarray(image_data)
+    image.save(file_name)
 
 def plot_3d_data(data, title, z_label, save_as=None):
     # Create a meshgrid for the 3D plot
@@ -43,15 +59,16 @@ def plot_3d_data(data, title, z_label, save_as=None):
     ax.set_xticks(np.arange(0, 105, 10))
     ax.set_yticks(np.arange(0, 105, 10))
 
-    # Set title
-    ax.set_title(title)
-
     # Set initial view
-    ax.view_init(elev=36, azim=-20)
+    ax.view_init(elev=30, azim=-20)
 
     # Save the plot if a file name is provided
     if save_as:
         plt.savefig(save_as)
+        trim_image(save_as)
+
+    # Set title
+    ax.set_title(title)
 
     # Show the plot
     plt.show()
@@ -83,18 +100,19 @@ def plot_2d_data(data, title, y_label, fit_degree=3, save_as=None):
         ax.plot(alpha_percentages[i:i+2], data[i:i+2], '-', color=colors[i])
 
     # Plot the fitted data
-    ax.plot(alpha_percentages, fitted_data, '--')
+    ax.plot(alpha_percentages, fitted_data, '--', color='purple')
 
     # Set axis labels
     ax.set_xlabel('Alpha (%)')
     ax.set_ylabel(y_label)
 
-    # Set title
-    ax.set_title(title)
-
     # Save the plot if a file name is provided
     if save_as:
         plt.savefig(save_as)
+        trim_image(save_as)
+
+    # Set title
+    ax.set_title(title)
 
     # Show the plot
     plt.show()
@@ -134,17 +152,6 @@ if __name__ == '__main__':
     # Load the data
     file_path = sys.argv[1]
     raw_data = load_data(file_path)
-
-    # Plot the percentage of run coins
-    data, data_2d = DefaultDict(list), np.zeros((21, 21))
-    for i in range(21):
-        for j in range(21):
-            file_name = f'{i*5}-{j*5}'
-            if file_name in raw_data:
-                value = raw_data[file_name]['run_coins'] / raw_data[file_name]['coins'] * 100
-                data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Percentage of Run Coins', 'Run Coins (%)')
-    plot_2d_data(data, 'Percentage of Run Coins', 'Run Coins (%)')
 
     # Plot percentage of invalid accepted fractal rings
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
