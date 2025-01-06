@@ -5,7 +5,7 @@ from matplotlib import cm
 from typing import DefaultDict
 import matplotlib.pyplot as plt
 
-def plot_3d_data(data, title, z_label):
+def plot_3d_data(data, title, z_label, save_as=None):
     # Create a meshgrid for the 3D plot
     X, Y = np.meshgrid(np.arange(0, 105, 5), np.arange(0, 105, 5))
 
@@ -46,10 +46,17 @@ def plot_3d_data(data, title, z_label):
     # Set title
     ax.set_title(title)
 
+    # Set initial view
+    ax.view_init(elev=36, azim=-20)
+
+    # Save the plot if a file name is provided
+    if save_as:
+        plt.savefig(save_as)
+
     # Show the plot
     plt.show()
 
-def plot_2d_data(data, title, y_label, fit_degree=3):
+def plot_2d_data(data, title, y_label, fit_degree=3, save_as=None):
     # Process the data and find different alpha percentages
     alpha_percentages = np.sort([alpha for alpha in data.keys() if len(data[alpha]) > 0])
     data = [np.mean(data[alpha]) for alpha in alpha_percentages]
@@ -59,12 +66,21 @@ def plot_2d_data(data, title, y_label, fit_degree=3):
     p = np.poly1d(z)
     fitted_data = p(alpha_percentages)
 
+    # Gradient color based on the alpha
+    gradient_values = np.where(alpha_percentages > 100, 0, alpha_percentages)
+    gradient_values -= gradient_values.min()
+    gradient_values = gradient_values / gradient_values.max()
+
+    # Define the colormap and set the colors
+    colors = cm.coolwarm(gradient_values)
+
     # Create the figure and axis
     fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111)
 
-    # Plot the data
-    ax.plot(alpha_percentages, data)
+    # Plot the data with a gradient color
+    for i in range(len(alpha_percentages) - 1):
+        ax.plot(alpha_percentages[i:i+2], data[i:i+2], '-', color=colors[i])
 
     # Plot the fitted data
     ax.plot(alpha_percentages, fitted_data, '--')
@@ -75,6 +91,10 @@ def plot_2d_data(data, title, y_label, fit_degree=3):
 
     # Set title
     ax.set_title(title)
+
+    # Save the plot if a file name is provided
+    if save_as:
+        plt.savefig(save_as)
 
     # Show the plot
     plt.show()
@@ -134,8 +154,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)')
-    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 12)
+    plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', save_as='invalid-accepted.png')
+    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 12, 'invalid-accepted-2d.png')
 
     # Plot percentage of valid rejected fractal rings
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -145,8 +165,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)')
-    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 12)
+    plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', save_as='valid-rejected.png')
+    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 12, 'valid-rejected-2d.png')
 
     # Average adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -156,8 +176,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['average_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications')
-    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications', 8)
+    plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications', save_as='average-communication.png')
+    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications', 5, 'average-communication-2d.png')
 
     # Maximum adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -167,8 +187,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['max_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications')
-    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications')
+    plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='maximum-communication.png')
+    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='maximum-communication-2d.png')
 
     # Average fractal ring acceptance rate per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -178,8 +198,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['accept_fractal']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)')
-    plot_2d_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)')
+    plot_3d_data(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', save_as='fractal-acceptance.png')
+    plot_2d_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', 7, 'fractal-acceptance-2d.png')
 
     # Average satisfaction per coin
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -189,8 +209,8 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['coin_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)')
-    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 12)
+    plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', save_as='coin-satisfaction.png')
+    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 12, 'coin-satisfaction-2d.png')
 
     # Average satisfaction per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -200,5 +220,5 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['trader_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)')
-    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 12)
+    plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', save_as='trader-satisfaction.png')
+    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 12, 'trader-satisfaction-2d.png')
