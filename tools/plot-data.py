@@ -223,7 +223,7 @@ if __name__ == '__main__':
                 value = raw_data[file_name]['max_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
     plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='images/maximum-communication.png')
-    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='images/maximum-communication-2d.png')
+    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications', 5, save_as='images/maximum-communication-2d.png')
     plot_scenarios(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', 'images/maximum-communication-scenario.png')
 
     # Average fractal ring acceptance rate per trader
