@@ -22,9 +22,9 @@ go.work.sum
 .env
 
 # other files
-*.png
 result/
 output/
+images/
 output.zip
 backup.zip
 **/.DS_Store
