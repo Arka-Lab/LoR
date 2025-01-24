@@ -51,8 +51,8 @@ def plot_3d_data(data, title, z_label, save_as=None):
     ax.bar3d(x_pos, y_pos, z_pos, dx, dy, dz, color=colors, shade=True)
 
     # Set axis labels
-    ax.set_xlabel('Random Behavior (%)')
-    ax.set_ylabel('Bad Behavior (%)')
+    ax.set_xlabel(r'$\beta$ (%)')
+    ax.set_ylabel(r'$\alpha$ (%)')
     ax.set_zlabel(z_label)
 
     # Set ticks for better readability
@@ -104,7 +104,7 @@ def plot_2d_data(data, title, y_label, fit_degree=3, save_as=None):
     ax.plot(alpha_percentages, fitted_data, '--', color='purple')
 
     # Set axis labels
-    ax.set_xlabel('Alpha (%)')
+    ax.set_xlabel(r'$\gamma$ (%)')
     ax.set_ylabel(y_label)
 
     # Save the plot if a file name is provided
