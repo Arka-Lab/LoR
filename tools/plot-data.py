@@ -51,8 +51,8 @@ def plot_3d_data(data, title, z_label, save_as=None):
     ax.bar3d(x_pos, y_pos, z_pos, dx, dy, dz, color=colors, shade=True)
 
     # Set axis labels
-    ax.set_xlabel(r'$\beta$ (%)')
-    ax.set_ylabel(r'$\alpha$ (%)')
+    ax.set_xlabel(r'$\beta$ (%)', fontsize=12)
+    ax.set_ylabel(r'$\alpha$ (%)', fontsize=12)
     ax.set_zlabel(z_label)
 
     # Set ticks for better readability
@@ -64,7 +64,6 @@ def plot_3d_data(data, title, z_label, save_as=None):
 
     # Save the plot if a file name is provided
     if save_as:
-        save_as = f'images/{save_as}'
         plt.savefig(save_as)
         trim_image(save_as)
 
@@ -104,12 +103,11 @@ def plot_2d_data(data, title, y_label, fit_degree=3, save_as=None):
     ax.plot(alpha_percentages, fitted_data, '--', color='purple')
 
     # Set axis labels
-    ax.set_xlabel(r'$\gamma$ (%)')
+    ax.set_xlabel(r'$\gamma$ (%)', fontsize=12)
     ax.set_ylabel(y_label)
 
     # Save the plot if a file name is provided
     if save_as:
-        save_as = f'images/{save_as}'
         plt.savefig(save_as)
         trim_image(save_as)
 
@@ -135,7 +133,6 @@ def plot_scenarios(data, title, y_label, save_as=None):
 
     # Save the plot if a file name is provided
     if save_as:
-        save_as = f'images/{save_as}'
         plt.savefig(save_as)
         trim_image(save_as)
     
@@ -189,9 +186,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['invalid_accept_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', save_as='invalid-accepted.png')
-    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 12, 'invalid-accepted-2d.png')
-    plot_scenarios(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 'invalid-accepted-bad-random.png')
+    plot_3d_data(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', save_as='images/invalid-accepted.png')
+    plot_2d_data(data, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 12, 'images/invalid-accepted-2d.png')
+    plot_scenarios(data_2d, 'Percentage of Invalid Accepted Fractal Rings', 'Invalid Accepted Fractal Rings (%)', 'images/invalid-accepted-scenario.png')
 
     # Plot percentage of valid rejected fractal rings
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -201,9 +198,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['valid_reject_fractal'] / raw_data[file_name]['fractals'] * 100
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', save_as='valid-rejected.png')
-    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 12, 'valid-rejected-2d.png')
-    plot_scenarios(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 'valid-rejected-bad-random.png')
+    plot_3d_data(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', save_as='images/valid-rejected.png')
+    plot_2d_data(data, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 12, 'images/valid-rejected-2d.png')
+    plot_scenarios(data_2d, 'Percentage of Valid Rejected Fractal Rings', 'Valid Rejected Fractal Rings (%)', 'images/valid-rejected-scenario.png')
 
     # Average adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -213,9 +210,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['average_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications', save_as='average-communication.png')
-    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications', 5, 'average-communication-2d.png')
-    plot_scenarios(data_2d, 'Average Number of Communication Complexity', 'Number of Communications', 'average-communication-bad-random.png')
+    plot_3d_data(data_2d, 'Average Number of Communication Complexity', 'Number of Communications', save_as='images/average-communication.png')
+    plot_2d_data(data, 'Average Number of Communication Complexity', 'Number of Communications', 5, 'images/average-communication-2d.png')
+    plot_scenarios(data_2d, 'Average Number of Communication Complexity', 'Number of Communications', 'images/average-communication-scenario.png')
 
     # Maximum adjacency per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -225,9 +222,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['max_adjacency']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='maximum-communication.png')
-    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='maximum-communication-2d.png')
-    plot_scenarios(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', 'maximum-communication-bad-random.png')
+    plot_3d_data(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='images/maximum-communication.png')
+    plot_2d_data(data, 'Maximum Number of Communication Complexity', 'Number of Communications', save_as='images/maximum-communication-2d.png')
+    plot_scenarios(data_2d, 'Maximum Number of Communication Complexity', 'Number of Communications', 'images/maximum-communication-scenario.png')
 
     # Average fractal ring acceptance rate per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -237,9 +234,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['accept_fractal']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', save_as='fractal-acceptance.png')
-    plot_2d_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', 7, 'fractal-acceptance-2d.png')
-    plot_scenarios(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', 'fractal-acceptance-bad-random.png')
+    plot_3d_data(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', save_as='images/fractal-acceptance.png')
+    plot_2d_data(data, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', 7, 'images/fractal-acceptance-2d.png')
+    plot_scenarios(data_2d, 'Average Fractal Ring Acceptance Rate', 'Fractal Ring Acceptance Rate (%)', 'images/fractal-acceptance-scenario.png')
 
     # Average satisfaction per coin
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -249,9 +246,9 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['coin_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', save_as='coin-satisfaction.png')
-    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 12, 'coin-satisfaction-2d.png')
-    plot_scenarios(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 'coin-satisfaction-bad-random.png')
+    plot_3d_data(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', save_as='images/coin-satisfaction.png')
+    plot_2d_data(data, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 12, 'images/coin-satisfaction-2d.png')
+    plot_scenarios(data_2d, 'Average Coin Satisfaction', 'Coin Satisfaction (%)', 'images/coin-satisfaction-scenario.png')
 
     # Average satisfaction per trader
     data, data_2d = DefaultDict(list), np.zeros((21, 21))
@@ -261,6 +258,6 @@ if __name__ == '__main__':
             if file_name in raw_data:
                 value = raw_data[file_name]['trader_satisfaction']
                 data_2d[i][j], data[i / 2 + j * 5] = value, np.append(data[i / 2 + j * 5], value)
-    plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', save_as='trader-satisfaction.png')
-    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 12, 'trader-satisfaction-2d.png')
-    plot_scenarios(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 'trader-satisfaction-bad-random.png')
+    plot_3d_data(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', save_as='images/trader-satisfaction.png')
+    plot_2d_data(data, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 12, 'images/trader-satisfaction-2d.png')
+    plot_scenarios(data_2d, 'Average Trader Satisfaction', 'Trader Satisfaction (%)', 'images/trader-satisfaction-scenario.png')
