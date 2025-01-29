@@ -22,9 +22,13 @@ go.work.sum
 .env
 
 # other files
-result/
-output/
 images/
-output.zip
-backup.zip
 **/.DS_Store
+result/
+linear-result/
+output/
+linear-output/
+output.zip
+linear-output.zip
+backup.zip
+linear-backup.zip

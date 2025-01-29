@@ -49,7 +49,7 @@ function run {
     fi
 }
 
-for i in $(seq 0 1 100)
+for i in $(seq 0 10 100)
 do
     run $i &
 done
