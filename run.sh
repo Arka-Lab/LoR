@@ -56,7 +56,7 @@ do
     for j in $(seq 0 5 $((100-i)))
     do
         run $i $j
-    done
+    done &
 done
 
 wait
