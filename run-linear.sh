@@ -1,7 +1,24 @@
 #!/bin/sh
+# Usage: ./run-linear.sh [cleanup] [save]
 
-rm -rf result
-mkdir -p result
+save=false
+cleanup=false
+for arg in "$@"
+do
+    if [ "$arg" == "cleanup" ]
+    then
+        cleanup=true
+    elif [ "$arg" == "save" ]
+    then
+        save=true
+    fi
+done
+
+if [ $cleanup == true ]
+then
+    rm -rf linear-result
+    mkdir -p linear-result
+fi
 
 trap "exit" INT
 trap "kill 0" EXIT
@@ -15,9 +32,9 @@ function log {
 }
 
 function run {
-    result_file="result/$1.result"
-    json_file="result/$1.json"
-    log_file="result/$1.log"
+    result_file="linear-result/$1.result"
+    json_file="linear-result/$1.json"
+    log_file="linear-result/$1.log"
 
     if [ -f $json_file ]
     then
@@ -38,5 +55,18 @@ do
 done
 
 wait
+
+if [ $save == true ]
+then
+    rm -rf linear-output linear-output.zip && mkdir -p linear-output
+    cp linear-result/*.result linear-output/
+    zip -r linear-output.zip linear-output && rm -rf linear-output
+    log "Output saved to linear-output.zip."
+
+    rm -rf linear-backup linear-backup.zip && mkdir -p linear-backup
+    cp linear-result/*.json linear-backup/
+    zip -r linear-backup.zip linear-backup && rm -rf linear-backup
+    log "Backup saved to linear-backup.zip."
+fi
 
 log "All runs finished!"
