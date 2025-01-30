@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Arka-Lab/LoR/internal"
-	"github.com/Arka-Lab/LoR/pkg"
+	"github.com/Arka-Lab/LoR/internal/models"
 )
 
 func ParseFlags() (int, time.Duration, int, int, int, string, string) {
@@ -15,7 +15,7 @@ func ParseFlags() (int, time.Duration, int, int, int, string, string) {
 	tradersPtr := flag.Int("trader", 100, "number of traders")
 	randomsPtr := flag.Int("random", 0, "number of random traders")
 	badsPtr := flag.Int("bad", 0, "number of bad traders")
-	alphaPtr := flag.Float64("alpha", pkg.BadBehavior, "bad behavior percentage")
+	alphaPtr := flag.Float64("alpha", models.BadBehavior, "bad behavior percentage")
 	saveTohPtr := flag.String("save-to", "system.json", "file path to save system")
 	loadFromhPtr := flag.String("load-from", "", "file path to load system")
 	flag.Parse()
@@ -44,7 +44,7 @@ func ParseFlags() (int, time.Duration, int, int, int, string, string) {
 	if *alphaPtr < 0 || *alphaPtr > 1 {
 		log.Fatalf("Bad behavior percentage must be between 0 and 1\n")
 	}
-	pkg.BadBehavior = *alphaPtr
+	models.BadBehavior = *alphaPtr
 
 	return numTypes, runTime, numTraders, numRandoms, numBads, saveTo, loadFrom
 }
@@ -58,7 +58,7 @@ func main() {
 		finish := make(chan bool, 1)
 		system = internal.NewSystem()
 
-		logger.Printf("Starting simulation with %d types (alpha = %.2f%%)...\n", numTypes, pkg.BadBehavior*100)
+		logger.Printf("Starting simulation with %d types (alpha = %.2f%%)...\n", numTypes, models.BadBehavior*100)
 		if err := system.Init(numTraders, numRandoms, numBads, uint(numTypes)); err != nil {
 			logger.Fatalf("Error initializing system: %v\n", err)
 		}

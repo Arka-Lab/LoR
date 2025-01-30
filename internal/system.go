@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Arka-Lab/LoR/pkg"
+	"github.com/Arka-Lab/LoR/internal/models"
 	"github.com/google/uuid"
 )
 
@@ -25,9 +25,9 @@ type System struct {
 	Locker         sync.Mutex
 	SubmitCount    map[string]int
 	AcceptedCount  map[string]int
-	Traders        map[string]*pkg.Trader
-	Coins          map[string]pkg.CoinTable
-	Fractals       map[string]*pkg.FractalRing
+	Traders        map[string]*models.Trader
+	Coins          map[string]models.CoinTable
+	Fractals       map[string]*models.FractalRing
 }
 
 func NewSystem() *System {
@@ -37,13 +37,13 @@ func NewSystem() *System {
 		Locker:         sync.Mutex{},
 		SubmitCount:    make(map[string]int),
 		AcceptedCount:  make(map[string]int),
-		Traders:        make(map[string]*pkg.Trader),
-		Coins:          make(map[string]pkg.CoinTable),
-		Fractals:       make(map[string]*pkg.FractalRing),
+		Traders:        make(map[string]*models.Trader),
+		Coins:          make(map[string]models.CoinTable),
+		Fractals:       make(map[string]*models.FractalRing),
 	}
 }
 
-func (system *System) ProcessCoin(coin pkg.CoinTable) error {
+func (system *System) ProcessCoin(coin models.CoinTable) error {
 	system.Locker.Lock()
 	defer system.Locker.Unlock()
 
@@ -55,7 +55,7 @@ func (system *System) ProcessCoin(coin pkg.CoinTable) error {
 	return system.processTradersForCoin(coin)
 }
 
-func (system *System) saveCoinToTraders(coin pkg.CoinTable) error {
+func (system *System) saveCoinToTraders(coin models.CoinTable) error {
 	for _, t := range system.Traders {
 		if err := t.SaveCoin(coin); err != nil {
 			return err
@@ -64,7 +64,7 @@ func (system *System) saveCoinToTraders(coin pkg.CoinTable) error {
 	return nil
 }
 
-func (system *System) processTradersForCoin(coin pkg.CoinTable) error {
+func (system *System) processTradersForCoin(coin models.CoinTable) error {
 	for index, traderID := range system.getShuffledTraderIDs(coin.Owner) {
 		trader := system.Traders[traderID]
 		if fractal := trader.CheckForRings(); fractal != nil {
@@ -78,7 +78,7 @@ func (system *System) processTradersForCoin(coin pkg.CoinTable) error {
 	return nil
 }
 
-func (system *System) handleFractal(trader *pkg.Trader, fractal *pkg.FractalRing, index int) error {
+func (system *System) handleFractal(trader *models.Trader, fractal *models.FractalRing, index int) error {
 	if err := system.processFractal(trader, fractal); err != nil {
 		if fractal.IsValid {
 			system.BadRejectCount++
@@ -116,7 +116,7 @@ func (system *System) getShuffledTraderIDs(firstID string) (result []string) {
 	return
 }
 
-func (system *System) processFractal(trader *pkg.Trader, fractal *pkg.FractalRing) error {
+func (system *System) processFractal(trader *models.Trader, fractal *models.FractalRing) error {
 	if err := system.verifyFractal(fractal); err != nil {
 		trader.RemoveFractalRing(fractal.ID)
 		return err
@@ -130,7 +130,7 @@ func (system *System) processFractal(trader *pkg.Trader, fractal *pkg.FractalRin
 	return nil
 }
 
-func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
+func (system *System) verifyFractal(fractal *models.FractalRing) error {
 	totalErrors := []error{}
 	for _, traderID := range fractal.VerificationTeam {
 		if err := system.Traders[traderID].SubmitRing(fractal); err != nil {
@@ -144,12 +144,12 @@ func (system *System) verifyFractal(fractal *pkg.FractalRing) error {
 	return nil
 }
 
-func (system *System) checkCoins(fractal *pkg.FractalRing) error {
+func (system *System) checkCoins(fractal *models.FractalRing) error {
 	for _, ring := range fractal.CooperationRings {
 		for _, coinID := range ring.CoinIDs {
 			if coin, ok := system.Coins[coinID]; !ok {
 				return errors.New("coin not found")
-			} else if coin.Status != pkg.Run {
+			} else if coin.Status != models.Run {
 				return errors.New("coin is not running")
 			}
 		}
@@ -157,11 +157,11 @@ func (system *System) checkCoins(fractal *pkg.FractalRing) error {
 	return nil
 }
 
-func (system *System) informOthers(fractal *pkg.FractalRing) error {
+func (system *System) informOthers(fractal *models.FractalRing) error {
 	for _, ring := range fractal.CooperationRings {
 		for _, coinID := range ring.CoinIDs {
 			coin := system.Coins[coinID]
-			coin.Status = pkg.Blocked
+			coin.Status = models.Blocked
 			system.Coins[coinID] = coin
 		}
 	}
@@ -173,8 +173,8 @@ func (system *System) informOthers(fractal *pkg.FractalRing) error {
 	return nil
 }
 
-func (system *System) runFractal(fractal *pkg.FractalRing) error {
-	for round := 0; round < pkg.RoundsCount; round++ {
+func (system *System) runFractal(fractal *models.FractalRing) error {
+	for round := 0; round < models.RoundsCount; round++ {
 		for index, ring := range fractal.CooperationRings {
 			if ring.Rounds == -1 {
 				totalErrors := []error{}
@@ -190,7 +190,7 @@ func (system *System) runFractal(fractal *pkg.FractalRing) error {
 				if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
 					ring.Rounds = round
 					fractal.CooperationRings[index] = ring
-					money := system.Coins[ring.CoinIDs[0]].Amount * float64(round) / pkg.RoundsCount
+					money := system.Coins[ring.CoinIDs[0]].Amount * float64(round) / models.RoundsCount
 					if err := system.applyRing(ring, money); err != nil {
 						return err
 					}
@@ -201,7 +201,7 @@ func (system *System) runFractal(fractal *pkg.FractalRing) error {
 
 	for index, ring := range fractal.CooperationRings {
 		if ring.Rounds == -1 {
-			ring.Rounds = pkg.RoundsCount
+			ring.Rounds = models.RoundsCount
 			fractal.CooperationRings[index] = ring
 			if err := system.applyRing(ring, system.Coins[ring.CoinIDs[0]].Amount); err != nil {
 				return err
@@ -211,15 +211,15 @@ func (system *System) runFractal(fractal *pkg.FractalRing) error {
 	return nil
 }
 
-func (system *System) applyRing(ring pkg.CooperationTable, money float64) error {
+func (system *System) applyRing(ring models.CooperationTable, money float64) error {
 	for _, coinID := range ring.CoinIDs {
 		coin := system.Coins[coinID]
 		amount := money * coin.Amount / ring.Weight
-		if ring.Rounds < pkg.RoundsCount {
-			coin.Status = pkg.Expired
+		if ring.Rounds < models.RoundsCount {
+			coin.Status = models.Expired
 		} else {
-			coin.Status = pkg.Paid
-			amount += pkg.FractalPrize
+			coin.Status = models.Paid
+			amount += models.FractalPrize
 		}
 		system.Coins[coinID] = coin
 
@@ -231,7 +231,7 @@ func (system *System) applyRing(ring pkg.CooperationTable, money float64) error 
 	}
 
 	for _, trader := range system.Traders {
-		if ring.Rounds < pkg.RoundsCount {
+		if ring.Rounds < models.RoundsCount {
 			trader.ExpireRing(ring)
 		} else {
 			trader.PayRing(ring)
@@ -240,7 +240,7 @@ func (system *System) applyRing(ring pkg.CooperationTable, money float64) error 
 	return nil
 }
 
-func (system *System) CreateRandomCoins(trader *pkg.Trader, done <-chan bool, errors chan<- error) {
+func (system *System) CreateRandomCoins(trader *models.Trader, done <-chan bool, errors chan<- error) {
 	for {
 		select {
 		case <-done:
@@ -265,14 +265,14 @@ func (system *System) Init(numTraders, numRandomVoters, numBadVoters int, coinTy
 	ch := make(chan bool)
 	for i := 0; i < numTraders; i++ {
 		go func() {
-			var trader *pkg.Trader
+			var trader *models.Trader
 			amount, wallet := rand.Float64()*1000, uuid.New().String()
 			if i < numRandomVoters {
-				trader = pkg.CreateTrader(pkg.RandomVote, amount, wallet, coinTypeCount)
+				trader = models.CreateTrader(models.RandomVote, amount, wallet, coinTypeCount)
 			} else if i < numRandomVoters+numBadVoters {
-				trader = pkg.CreateTrader(pkg.BadVote, amount, wallet, coinTypeCount)
+				trader = models.CreateTrader(models.BadVote, amount, wallet, coinTypeCount)
 			} else {
-				trader = pkg.CreateTrader(pkg.Normal, amount, wallet, coinTypeCount)
+				trader = models.CreateTrader(models.Normal, amount, wallet, coinTypeCount)
 			}
 
 			system.Locker.Lock()
