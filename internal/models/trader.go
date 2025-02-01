@@ -33,6 +33,7 @@ type TraderData struct {
 	Traders       map[string]Trader
 	Coins         map[string]CoinTable
 	Cooperations  map[string]CooperationTable
+	BanUntil      int
 }
 
 type Trader struct {
@@ -66,6 +67,7 @@ func CreateTrader(traderType BehaviorType, account float64, wallet string, coinT
 			Traders:       make(map[string]Trader),
 			Coins:         make(map[string]CoinTable),
 			Cooperations:  make(map[string]CooperationTable),
+			BanUntil:      0,
 		},
 	}
 }
@@ -82,10 +84,12 @@ func (t *Trader) SaveTrader(trader Trader) error {
 	return nil
 }
 
-func (t *Trader) CheckForRings() *FractalRing {
+func (t *Trader) CheckForRings(fractalCounter int) *FractalRing {
 	if cooperation := t.checkForCooperationRing(); cooperation != nil {
 		t.Data.Cooperations[cooperation.ID] = *cooperation
-		return t.checkForFractalRing()
+		if t.Data.BanUntil <= fractalCounter {
+			return t.checkForFractalRing()
+		}
 	}
 	return nil
 }

@@ -22,6 +22,7 @@ const (
 type System struct {
 	BadAcceptCount int
 	BadRejectCount int
+	FractalCounter int
 	Locker         sync.Mutex
 	SubmitCount    map[string]int
 	AcceptedCount  map[string]int
@@ -34,6 +35,7 @@ func NewSystem() *System {
 	return &System{
 		BadAcceptCount: 0,
 		BadRejectCount: 0,
+		FractalCounter: 0,
 		Locker:         sync.Mutex{},
 		SubmitCount:    make(map[string]int),
 		AcceptedCount:  make(map[string]int),
@@ -67,7 +69,8 @@ func (system *System) saveCoinToTraders(coin models.CoinTable) error {
 func (system *System) processTradersForCoin(coin models.CoinTable) error {
 	for index, traderID := range system.getShuffledTraderIDs(coin.Owner) {
 		trader := system.Traders[traderID]
-		if fractal := trader.CheckForRings(); fractal != nil {
+		if fractal := trader.CheckForRings(system.FractalCounter); fractal != nil {
+			system.FractalCounter++
 			system.SubmitCount[traderID]++
 			if err := system.handleFractal(trader, fractal, index); err != nil {
 				return err
@@ -131,14 +134,17 @@ func (system *System) processFractal(trader *models.Trader, fractal *models.Frac
 }
 
 func (system *System) verifyFractal(fractal *models.FractalRing) error {
-	totalErrors := []error{}
+	accepted, rejected := []string{}, []string{}
 	for _, traderID := range fractal.VerificationTeam {
 		if err := system.Traders[traderID].SubmitRing(fractal); err != nil {
-			totalErrors = append(totalErrors, err)
+			rejected = append(rejected, traderID)
+		} else {
+			accepted = append(accepted, traderID)
 		}
 	}
 
-	if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
+	system.banTraders(accepted, rejected)
+	if len(rejected) > len(accepted) {
 		return errors.New("fractal ring verification failed")
 	}
 	return nil
@@ -177,17 +183,20 @@ func (system *System) runFractal(fractal *models.FractalRing) error {
 	for round := 0; round < models.RoundsCount; round++ {
 		for index, ring := range fractal.CooperationRings {
 			if ring.Rounds == -1 {
-				totalErrors := []error{}
+				accepted, rejected := []string{}, []string{}
 				for _, traderID := range fractal.VerificationTeam {
 					if err := system.Traders[traderID].Vote(); err != nil {
 						if err.Error() != "bad behavior" {
 							return err
 						}
-						totalErrors = append(totalErrors, err)
+						rejected = append(rejected, traderID)
+					} else {
+						accepted = append(accepted, traderID)
 					}
 				}
 
-				if 2*len(totalErrors) >= len(fractal.VerificationTeam) {
+				system.banTraders(accepted, rejected)
+				if len(rejected) > len(accepted) {
 					ring.Rounds = round
 					fractal.CooperationRings[index] = ring
 					money := system.Coins[ring.CoinIDs[0]].Amount * float64(round) / models.RoundsCount
@@ -238,6 +247,16 @@ func (system *System) applyRing(ring models.CooperationTable, money float64) err
 		}
 	}
 	return nil
+}
+
+func (system *System) banTraders(accepted, rejected []string) {
+	minority := accepted
+	if len(accepted) > len(rejected) {
+		minority = rejected
+	}
+	for _, traderID := range minority {
+		system.Traders[traderID].Data.BanUntil = system.FractalCounter + models.BanCount
+	}
 }
 
 func (system *System) CreateRandomCoins(trader *models.Trader, done <-chan bool, errors chan<- error) {

@@ -12,6 +12,7 @@ import (
 const (
 	VerificationMin = 21
 	VerificationMax = 21
+	BanCount        = 3
 )
 
 func (t *Trader) SubmitRing(ring *FractalRing) error {
