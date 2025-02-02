@@ -1,4 +1,4 @@
-package models
+package pkg
 
 import (
 	"crypto/rsa"

@@ -3,7 +3,7 @@ package internal
 import (
 	"fmt"
 
-	"github.com/Arka-Lab/LoR/internal/models"
+	"github.com/Arka-Lab/LoR/pkg"
 )
 
 func AnalyzeSystem(system *System) {
@@ -12,7 +12,7 @@ func AnalyzeSystem(system *System) {
 
 	runCoins := 0
 	for _, coin := range system.Coins {
-		if coin.Status == models.Run {
+		if coin.Status == pkg.Run {
 			runCoins++
 		}
 	}
@@ -38,7 +38,7 @@ func AnalyzeSystem(system *System) {
 		for _, fractal := range system.Fractals {
 			for _, ring := range fractal.CooperationRings {
 				if ring.Rounds != -1 {
-					satisfaction := float64(ring.Rounds) / float64(models.RoundsCount)
+					satisfaction := float64(ring.Rounds) / float64(pkg.RoundsCount)
 					if !ring.IsValid {
 						satisfaction *= -1
 					}
