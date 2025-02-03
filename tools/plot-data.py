@@ -180,7 +180,7 @@ def load_data(dir_path):
 if __name__ == '__main__':
     # Check the number of arguments
     if len(sys.argv) != 3:
-        print('Usage: python plot-data.py <directory_path> <linear_directory_path>')
+        print('Usage: python3 plot-data.py <directory_path> <linear_directory_path>')
         sys.exit(1)
 
     # Load the data
