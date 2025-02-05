@@ -32,9 +32,9 @@ function log {
 }
 
 function run {
-    result_file="linear-result/$1.result"
-    json_file="linear-result/$1.json"
-    log_file="linear-result/$1.log"
+    result_file="linear-result/$1-p.result"
+    json_file="linear-result/$1-p.json"
+    log_file="linear-result/$1-p.log"
 
     if [ -f $json_file ]
     then
@@ -47,11 +47,46 @@ function run {
         go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_traders -alpha=$alpha -save-to=$json_file > $result_file 2> $log_file
         log "Run with alpha=$1% finished."
     fi
+
+    result_file="linear-result/$1-num-bad.result"
+    json_file="linear-result/$1-num-bad.json"
+    log_file="linear-result/$1-num-bad.log"
+
+    if [ -f $json_file ]
+    then
+        log "Loading from $json_file..."
+        go run cmd/main.go -load-from=$json_file > $result_file 2> $log_file
+        log "Loaded from $json_file."
+    else
+        num_bad=$(echo "$1/100*$num_traders" | bc -l)
+        log "Running with $1% bad traders..."
+        go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -save-to=$json_file -bad=$num_bad > $result_file 2> $log_file
+        log "Run with $1% bad traders finished."
+    fi
+
+    result_file="linear-result/$1-num-random.result"
+    json_file="linear-result/$1-num-random.json"
+    log_file="linear-result/$1-num-random.log"
+
+    if [ -f $json_file ]
+    then
+        log "Loading from $json_file..."
+        go run cmd/main.go -load-from=$json_file > $result_file 2> $log_file
+        log "Loaded from $json_file."
+    else
+        num_random=$(echo "$1/100*$num_traders" | bc -l)
+        log "Running with $1% random traders..."
+        go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -save-to=$json_file > $result_file 2> $log_file
+        log "Run with $1% random traders finished."
+    fi
 }
 
-for i in $(seq 0 10 100)
+for i in {0..9}
 do
-    run $i &
+    for j in $(seq $i 10 100)
+    do
+        run $j
+    done &
 done
 
 wait

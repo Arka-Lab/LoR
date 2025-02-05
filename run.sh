@@ -51,7 +51,14 @@ function run {
     fi
 }
 
-for i in $(seq 0 5 100)
+for i in $(seq 0 10 100)
+do
+    for j in $(seq 0 5 $((100-i)))
+    do
+        run $i $j
+    done &
+done
+for i in $(seq 5 10 100)
 do
     for j in $(seq 0 5 $((100-i)))
     do
