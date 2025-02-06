@@ -58,7 +58,7 @@ function run {
         go run cmd/main.go -load-from=$json_file > $result_file 2> $log_file
         log "Loaded from $json_file."
     else
-        num_bad=$(echo "$1/100*$num_traders" | bc -l)
+        num_bad=$(echo "$1/100*$num_traders" | bc -l | awk '{print int($1)}')
         log "Running with $1% bad traders..."
         go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -save-to=$json_file -bad=$num_bad > $result_file 2> $log_file
         log "Run with $1% bad traders finished."
@@ -74,7 +74,7 @@ function run {
         go run cmd/main.go -load-from=$json_file > $result_file 2> $log_file
         log "Loaded from $json_file."
     else
-        num_random=$(echo "$1/100*$num_traders" | bc -l)
+        num_random=$(echo "$1/100*$num_traders" | bc -l | awk '{print int($1)}')
         log "Running with $1% random traders..."
         go run cmd/main.go -type=$num_types -time=$run_time -trader=$num_traders -random=$num_random -save-to=$json_file > $result_file 2> $log_file
         log "Run with $1% random traders finished."
