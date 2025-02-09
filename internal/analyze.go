@@ -69,27 +69,23 @@ func AnalyzeSystem(system *System) {
 		}
 		fmt.Printf("Average satisfaction per trader: %.2f%%\n", float64(tradersTotal)/float64(len(traderSatisfaction))*100)
 
-		adjacentFractals := make(map[string]map[string]bool)
-		tradersAdjacency := make(map[string]map[string]bool)
-		verificationAdjacency := make(map[string]map[string]bool)
-		for _, trader := range system.Traders {
-			adjacentFractals[trader.ID] = make(map[string]bool)
-			tradersAdjacency[trader.ID] = make(map[string]bool)
-			verificationAdjacency[trader.ID] = make(map[string]bool)
+		hasFractal := make(map[string]map[string]bool)
+		communicationCount := make(map[string]int)
+		for traderID := range system.Traders {
+			hasFractal[traderID] = make(map[string]bool)
+			communicationCount[traderID] = 0
 		}
 		for _, fractal := range system.Fractals {
 			for _, ring := range fractal.CooperationRings {
 				for _, coinID := range ring.CoinIDs {
 					owner := system.Coins[coinID].Owner
-					adjacentFractals[owner][fractal.ID] = true
+					hasFractal[owner][fractal.ID] = true
+					communicationCount[owner] += len(ring.CoinIDs)
+					communicationCount[owner] += len(fractal.VerificationTeam)
+				}
 
-					for _, traderID := range fractal.VerificationTeam {
-						tradersAdjacency[owner][traderID] = true
-						verificationAdjacency[traderID][owner] = true
-					}
-					for _, otherCoinID := range ring.CoinIDs {
-						tradersAdjacency[owner][system.Coins[otherCoinID].Owner] = true
-					}
+				for _, traderID := range fractal.VerificationTeam {
+					communicationCount[traderID] += len(ring.CoinIDs)
 				}
 			}
 		}
@@ -97,20 +93,35 @@ func AnalyzeSystem(system *System) {
 		tradersCount := 0
 		totalAdjacency, maximumAdjacency := 0, 0
 		for traderID := range system.Traders {
-			adjacency := len(verificationAdjacency[traderID]) / len(system.Fractals)
-			if len(adjacentFractals[traderID]) > 0 {
-				adjacency += len(tradersAdjacency[traderID]) / len(adjacentFractals[traderID])
-			}
-
-			if adjacency > 0 {
+			if communicationCount[traderID] > 0 {
 				tradersCount++
-				totalAdjacency += adjacency
-				if adjacency > maximumAdjacency {
-					maximumAdjacency = adjacency
+				totalAdjacency += communicationCount[traderID]
+				if communicationCount[traderID] > maximumAdjacency {
+					maximumAdjacency = communicationCount[traderID]
 				}
 			}
 		}
 		fmt.Printf("Average adjacency per trader: %.2f\n", float64(totalAdjacency)/float64(tradersCount))
 		fmt.Println("Maximum adjacency per trader:", maximumAdjacency)
+
+		ringCount := make(map[string]int)
+		for traderID := range system.Traders {
+			ringCount[traderID] = 0
+		}
+		for _, fractal := range system.Fractals {
+			for _, ring := range fractal.CooperationRings {
+				for _, coinID := range ring.CoinIDs {
+					coin := system.Coins[coinID]
+					ringCount[coin.Owner]++
+				}
+			}
+		}
+		maxRings := 0
+		for _, count := range ringCount {
+			if count > maxRings {
+				maxRings = count
+			}
+		}
+		fmt.Println("Maximum cooperation ring count:", maxRings)
 	}
 }
