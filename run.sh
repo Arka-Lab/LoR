@@ -58,6 +58,9 @@ do
         run $i $j
     done &
 done
+
+wait
+
 for i in $(seq 5 10 100)
 do
     for j in $(seq 0 5 $((100-i)))

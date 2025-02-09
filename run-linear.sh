@@ -81,7 +81,7 @@ function run {
     fi
 }
 
-for i in {0..9}
+for i in {1..10}
 do
     for j in $(seq $i 10 100)
     do
