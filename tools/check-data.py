@@ -21,6 +21,7 @@ def check_data(dir_path):
                     result['trader_satisfaction'] = float(lines[8].split(': ')[1].replace('%', ''))
                     result['average_adjacency'] = float(lines[9].split(': ')[1])
                     result['max_adjacency'] = int(lines[10].split(': ')[1])
+                    result['max_cooperation'] = int(lines[11].split(': ')[1])
 
                 data[file_name.split('.')[0]] = result
             except:
